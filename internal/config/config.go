@@ -3,19 +3,15 @@ package config
 type Config interface {
 	Getter
 	Setter
-	Defaultable
-}
-
-type Defaultable interface {
-	SetDefault(key string, value interface{})
 }
 
 type Getter interface {
-	GetString(key string) string
-	GetInt(key string) int
-	Get(key string) interface{}
+	GetString(key string) (string, error)
+	GetInt(key string) (int, error)
+	Get(key string) (interface{}, error)
 }
 
 type Setter interface {
-	Set(key string, value interface{})
+	Set(key string, value interface{}) error
+	SetDefault(key string, value interface{}) error
 }
