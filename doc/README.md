@@ -76,3 +76,20 @@
   }
 }
 ```
+
+## Database Schema: MongoDB
+```json
+{
+  "_id": {
+    "$oid": "628f70efd856995383294372"
+  },
+  "unique_id": "1815c960-6000-4ddf-955d-e93bf33d4c6c",
+  "name": "jambi-kota.png",
+  "mimetype": "image/png",
+  "extension": "png",
+  "size": 267839,
+  "path": "file/default/2022/05/26/jambi-kota.png",
+  "created_at": "2022-05-26T12:22:07.115Z",
+  "updated_at": "2022-05-26T12:22:07.115Z"
+}
+```
