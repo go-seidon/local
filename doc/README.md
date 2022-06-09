@@ -53,3 +53,26 @@
 2. Retrieve File
 
 3. Delete File
+
+
+## Database Schema: MySQL
+1. File
+```json
+{
+  "id": {
+    "type": "int,auto-increment",
+  },
+  "unique_id": {
+    "type": "varchar,required"
+  },
+  "name": {
+
+  },
+  "size": {
+
+  },
+  "extension": {
+    
+  }
+}
+```
