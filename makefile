@@ -34,6 +34,7 @@ test:
 
 .PHONY: generate-mock
 generate-mock:
+	mockgen -package=mock -source internal/logging/log.go -destination=internal/mock/logging_log_mock.go
 
 .PHONY: run-grpc-app
 run-grpc-app:

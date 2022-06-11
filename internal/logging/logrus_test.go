@@ -2,19 +2,13 @@ package logging_test
 
 import (
 	"fmt"
-	"testing"
 
 	"github.com/go-seidon/local/internal/logging"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
-func TestLog(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Log Package")
-}
-
-var _ = Describe("Logger Package", func() {
+var _ = Describe("Logrus Package", func() {
 
 	Context("NewLogrusLog function", func() {
 		var (
