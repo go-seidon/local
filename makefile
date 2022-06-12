@@ -36,6 +36,7 @@ test:
 generate-mock:
 	mockgen -package=mock -source internal/logging/log.go -destination=internal/mock/logging_log_mock.go
 	mockgen -package=mock -source internal/serialization/serializer.go -destination=internal/mock/serialization_serializer_mock.go
+	mockgen -package=mock -source internal/healthcheck/health.go -destination=internal/mock/healthcheck_health_mock.go
 
 .PHONY: run-grpc-app
 run-grpc-app:
