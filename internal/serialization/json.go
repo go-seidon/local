@@ -6,8 +6,7 @@ type jsonSerializer struct {
 }
 
 func (s *jsonSerializer) Encode(i interface{}) ([]byte, error) {
-	data, err := json.Marshal(i)
-	return data, err
+	return json.Marshal(i)
 }
 
 func (s *jsonSerializer) Decode(i []byte, o interface{}) error {
