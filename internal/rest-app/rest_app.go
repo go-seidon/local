@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-seidon/local/internal/healthcheck"
 	"github.com/go-seidon/local/internal/logging"
 	"github.com/go-seidon/local/internal/serialization"
 
@@ -19,10 +20,25 @@ type restApp struct {
 func (app *restApp) Run() error {
 	app.logger.Info("Running %s:%s", app.config.GetAppName(), app.config.GetAppVersion())
 
+	healthJobs, err := healthcheck.NewHealthJobs()
+	if err != nil {
+		return err
+	}
+
+	healthService, err := healthcheck.NewHealthService(healthJobs)
+	if err != nil {
+		return err
+	}
+
+	err = healthService.Start()
+	if err != nil {
+		return err
+	}
+
 	router := mux.NewRouter()
 	router.Use(DefaultHeaderMiddleware)
 	router.HandleFunc("/", NewRootHandler(app.logger, app.serializer, app.config.GetAppName(), app.config.GetAppVersion()))
-	router.HandleFunc("/health", NewHealthCheckHandler(app.logger, app.serializer)).Methods("GET")
+	router.HandleFunc("/health", NewHealthCheckHandler(app.logger, app.serializer, healthService)).Methods("GET")
 	router.NotFoundHandler = NewNotFoundHandler(app.logger, app.serializer)
 	router.MethodNotAllowedHandler = NewMethodNotAllowedHandler(app.logger, app.serializer)
 

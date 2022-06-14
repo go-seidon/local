@@ -1,8 +1,11 @@
 package rest_app_test
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/go-seidon/local/internal/healthcheck"
 	"github.com/go-seidon/local/internal/mock"
 	rest_app "github.com/go-seidon/local/internal/rest-app"
 	"github.com/golang/mock/gomock"
@@ -195,11 +198,12 @@ var _ = Describe("Handler Package", func() {
 
 	Context("HealthCheckHandler", func() {
 		var (
-			handler    http.HandlerFunc
-			r          *http.Request
-			w          *mock.MockResponseWriter
-			log        *mock.MockLogger
-			serializer *mock.MockSerializer
+			handler       http.HandlerFunc
+			r             *http.Request
+			w             *mock.MockResponseWriter
+			log           *mock.MockLogger
+			serializer    *mock.MockSerializer
+			healthService *mock.MockHealthService
 		)
 
 		BeforeEach(func() {
@@ -209,18 +213,18 @@ var _ = Describe("Handler Package", func() {
 			w = mock.NewMockResponseWriter(ctrl)
 			log = mock.NewMockLogger(ctrl)
 			serializer = mock.NewMockSerializer(ctrl)
-			handler = rest_app.NewHealthCheckHandler(log, serializer)
+			healthService = mock.NewMockHealthService(ctrl)
+			handler = rest_app.NewHealthCheckHandler(log, serializer, healthService)
 		})
 
-		When("success call the function", func() {
+		When("failed check service health", func() {
 			It("should write response", func() {
 
+				err := fmt.Errorf("failed check health")
+
 				b := rest_app.ResponseBody{
-					Code:    "SUCCESS",
-					Message: "success check service health",
-					Data: &rest_app.HealthCheckResponse{
-						Status: "ok",
-					},
+					Code:    "ERROR",
+					Message: err.Error(),
 				}
 
 				log.
@@ -230,6 +234,91 @@ var _ = Describe("Handler Package", func() {
 				log.
 					EXPECT().
 					Debug("Returning function: HealthCheckHandler").
+					Times(1)
+
+				healthService.
+					EXPECT().
+					Check().
+					Return(nil, err).
+					Times(1)
+
+				serializer.
+					EXPECT().
+					Encode(b).
+					Return([]byte{}, nil).
+					Times(1)
+
+				w.
+					EXPECT().
+					Write([]byte{}).
+					Times(1)
+
+				handler.ServeHTTP(w, r)
+			})
+		})
+
+		When("success check service health", func() {
+			It("should write response", func() {
+
+				currentTimestamp := time.Now()
+				res := &healthcheck.CheckResult{
+					Status: "WARNING",
+					Items: map[string]healthcheck.CheckResultItem{
+						"app-disk": healthcheck.CheckResultItem{
+							Name:      "app-disk",
+							Status:    "FAILED",
+							Error:     "Critical: disk usage too high 96.71 percent",
+							CheckedAt: currentTimestamp,
+							Metadata:  nil,
+						},
+						"internet-connection": healthcheck.CheckResultItem{
+							Name:      "internet-connection",
+							Status:    "OK",
+							Error:     "",
+							CheckedAt: currentTimestamp,
+							Metadata:  nil,
+						},
+					},
+				}
+				jobs := map[string]rest_app.HealthCheckItem{
+					"app-disk": rest_app.HealthCheckItem{
+						Name:      "app-disk",
+						Status:    "FAILED",
+						Error:     "Critical: disk usage too high 96.71 percent",
+						CheckedAt: currentTimestamp,
+						Metadata:  nil,
+					},
+					"internet-connection": rest_app.HealthCheckItem{
+						Name:      "internet-connection",
+						Status:    "OK",
+						Error:     "",
+						CheckedAt: currentTimestamp,
+						Metadata:  nil,
+					},
+				}
+
+				b := rest_app.ResponseBody{
+					Data: &rest_app.HealthCheckResponse{
+						Status:  "WARNING",
+						Details: jobs,
+					},
+					Code:    "SUCCESS",
+					Message: "success check service health",
+				}
+
+				log.
+					EXPECT().
+					Debug("In function: HealthCheckHandler").
+					Times(1)
+				log.
+					EXPECT().
+					Debug("Returning function: HealthCheckHandler").
+					Times(1)
+
+				healthService.
+					EXPECT().
+					Check().
+					Return(res, nil).
 					Times(1)
 
 				serializer.

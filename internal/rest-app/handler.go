@@ -2,7 +2,9 @@ package rest_app
 
 import (
 	"net/http"
+	"time"
 
+	"github.com/go-seidon/local/internal/healthcheck"
 	"github.com/go-seidon/local/internal/logging"
 	"github.com/go-seidon/local/internal/serialization"
 )
@@ -65,22 +67,55 @@ func NewRootHandler(log logging.Logger, serializer serialization.Serializer, app
 	}
 }
 
-type HealthCheckResponse struct {
-	Status string `json:"status"`
+type HealthCheckItem struct {
+	Name      string      `json:"name"`
+	Status    string      `json:"status"`
+	CheckedAt time.Time   `json:"checked_at"`
+	Error     string      `json:"error"`
+	Metadata  interface{} `json:"metadata"`
 }
 
-func NewHealthCheckHandler(log logging.Logger, serializer serialization.Serializer) http.HandlerFunc {
+type HealthCheckResponse struct {
+	Status  string                     `json:"status"`
+	Details map[string]HealthCheckItem `json:"details"`
+}
+
+func NewHealthCheckHandler(log logging.Logger, serializer serialization.Serializer, healthService healthcheck.HealthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.Debug("In function: HealthCheckHandler")
 		defer log.Debug("Returning function: HealthCheckHandler")
 
-		b := NewResponseBody(&NewResponseBodyParam{
-			Data: &HealthCheckResponse{
-				Status: "ok",
-			},
-			Message: "success check service health",
-		})
-		res, _ := serializer.Encode(b)
+		var res []byte
+		var b ResponseBody
+
+		r, err := healthService.Check()
+		if err != nil {
+			b = NewResponseBody(&NewResponseBodyParam{
+				Code:    CODE_ERROR,
+				Message: err.Error(),
+			})
+		} else {
+			jobs := map[string]HealthCheckItem{}
+			for jobName, item := range r.Items {
+				jobs[jobName] = HealthCheckItem{
+					Name:      item.Name,
+					Status:    item.Status,
+					Error:     item.Error,
+					Metadata:  item.Metadata,
+					CheckedAt: item.CheckedAt,
+				}
+			}
+
+			b = NewResponseBody(&NewResponseBodyParam{
+				Data: &HealthCheckResponse{
+					Status:  r.Status,
+					Details: jobs,
+				},
+				Message: "success check service health",
+			})
+		}
+
+		res, _ = serializer.Encode(b)
 
 		w.Write(res)
 	}
