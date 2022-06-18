@@ -1,4 +1,10 @@
+## sonar 
 .scannerwork
-*.env
 *.out
+
+## golang
 vendor/*
+*.test
+
+## app
+*.env

@@ -7,7 +7,10 @@
 No doc right now
 
 ## Todo
-Nothing todo right now
+1. Remove `*Service` suffix from `HealthCheck`
+2. Add logging: Error
+3. Implement repository: MySQL
+4. Implement rest app: Delete File handler
 
 ## Technical Stack
 1. Transport layer
@@ -15,6 +18,7 @@ Nothing todo right now
 - grpc
 2. Database
 - mysql
+- postgres
 - mongo
 3. Config
 - system environment
