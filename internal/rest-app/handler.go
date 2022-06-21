@@ -14,7 +14,7 @@ func NewNotFoundHandler(log logging.Logger, serializer serialization.Serializer)
 		log.Debug("In function: NotFoundHandler")
 		defer log.Debug("Returning function: NotFoundHandler")
 
-		w.Header().Set("Content-Type", "applicaton/json")
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 
 		b := NewResponseBody(&NewResponseBodyParam{
@@ -32,7 +32,7 @@ func NewMethodNotAllowedHandler(log logging.Logger, serializer serialization.Ser
 		log.Debug("In function: MethodNotAllowedHandler")
 		defer log.Debug("Returning function: MethodNotAllowedHandler")
 
-		w.Header().Set("Content-Type", "applicaton/json")
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 
 		b := NewResponseBody(&NewResponseBodyParam{
