@@ -30,17 +30,9 @@ type deleter struct {
 }
 
 func NewDeleteFn(fileManager explorer.FileManager) repository.DeleteFn {
-	return func(ctx context.Context, f repository.DeleteFileFn) error {
-		repoRes, err := f.DeleteFile()
-		if err != nil {
-			if errors.Is(err, repository.ErrorRecordNotFound) {
-				return ErrorResourceNotFound
-			}
-			return err
-		}
-
+	return func(ctx context.Context, r repository.DeleteFnParam) error {
 		exists, err := fileManager.IsFileExists(ctx, explorer.IsFileExistsParam{
-			Path: repoRes.FilePath,
+			Path: r.FilePath,
 		})
 		if err != nil {
 			return err
@@ -51,7 +43,7 @@ func NewDeleteFn(fileManager explorer.FileManager) repository.DeleteFn {
 		}
 
 		_, err = fileManager.RemoveFile(ctx, explorer.RemoveFileParam{
-			Path: repoRes.FilePath,
+			Path: r.FilePath,
 		})
 		if err != nil {
 			return err
@@ -76,6 +68,9 @@ func (s *deleter) DeleteFile(ctx context.Context, p DeleteFileParam) (*DeleteFil
 	})
 
 	if err != nil {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
+			return nil, ErrorResourceNotFound
+		}
 		return nil, err
 	}
 

@@ -155,6 +155,21 @@ var _ = Describe("Deleter Service", func() {
 			})
 		})
 
+		When("file is not available", func() {
+			It("should return error", func() {
+				fileRepo.
+					EXPECT().
+					DeleteFile(gomock.Eq(ctx), gomock.Eq(deleteParam), gomock.Any()).
+					Return(nil, repository.ErrorRecordNotFound).
+					Times(1)
+
+				res, err := s.DeleteFile(ctx, p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(deleting.ErrorResourceNotFound))
+			})
+		})
+
 		When("failed success file", func() {
 			It("should return result", func() {
 				fileRepo.
@@ -175,9 +190,8 @@ var _ = Describe("Deleter Service", func() {
 		var (
 			ctx               context.Context
 			fileManager       *mock.MockFileManager
-			deleteFileFn      *mock.MockDeleteFileFn
 			fn                repository.DeleteFn
-			deleteRes         *repository.DeleteFileFnResult
+			deleteFnParam     repository.DeleteFnParam
 			isFileExistsParam explorer.IsFileExistsParam
 			removeParam       explorer.RemoveFileParam
 			removeRes         *explorer.RemoveFileResult
@@ -189,65 +203,30 @@ var _ = Describe("Deleter Service", func() {
 			t := GinkgoT()
 			ctrl := gomock.NewController(t)
 			fileManager = mock.NewMockFileManager(ctrl)
-			deleteFileFn = mock.NewMockDeleteFileFn(ctrl)
 			fn = deleting.NewDeleteFn(fileManager)
-			deleteRes = &repository.DeleteFileFnResult{
+			deleteFnParam = repository.DeleteFnParam{
 				FilePath: "mock/path",
 			}
 			isFileExistsParam = explorer.IsFileExistsParam{
-				Path: deleteRes.FilePath,
+				Path: deleteFnParam.FilePath,
 			}
 			removeParam = explorer.RemoveFileParam{
-				Path: deleteRes.FilePath,
+				Path: deleteFnParam.FilePath,
 			}
 			removeRes = &explorer.RemoveFileResult{
 				RemovedAt: currentTimestamp,
 			}
 		})
 
-		When("failed execute DeleteFile", func() {
-			It("should return error", func() {
-				deleteFileFn.
-					EXPECT().
-					DeleteFile().
-					Return(nil, fmt.Errorf("failed execute query")).
-					Times(1)
-
-				err := fn(ctx, deleteFileFn)
-
-				Expect(err).To(Equal(fmt.Errorf("failed execute query")))
-			})
-		})
-
-		When("file record is not found", func() {
-			It("should return error", func() {
-				deleteFileFn.
-					EXPECT().
-					DeleteFile().
-					Return(nil, repository.ErrorRecordNotFound).
-					Times(1)
-
-				err := fn(ctx, deleteFileFn)
-
-				Expect(err).To(Equal(deleting.ErrorResourceNotFound))
-			})
-		})
-
 		When("failed check file existstance", func() {
 			It("should return error", func() {
-				deleteFileFn.
-					EXPECT().
-					DeleteFile().
-					Return(deleteRes, nil).
-					Times(1)
-
 				fileManager.
 					EXPECT().
 					IsFileExists(gomock.Eq(ctx), gomock.Eq(isFileExistsParam)).
 					Return(false, fmt.Errorf("failed read disk")).
 					Times(1)
 
-				err := fn(ctx, deleteFileFn)
+				err := fn(ctx, deleteFnParam)
 
 				Expect(err).To(Equal(fmt.Errorf("failed read disk")))
 			})
@@ -255,19 +234,13 @@ var _ = Describe("Deleter Service", func() {
 
 		When("file is not available in disk", func() {
 			It("should return error", func() {
-				deleteFileFn.
-					EXPECT().
-					DeleteFile().
-					Return(deleteRes, nil).
-					Times(1)
-
 				fileManager.
 					EXPECT().
 					IsFileExists(gomock.Eq(ctx), gomock.Eq(isFileExistsParam)).
 					Return(false, nil).
 					Times(1)
 
-				err := fn(ctx, deleteFileFn)
+				err := fn(ctx, deleteFnParam)
 
 				Expect(err).To(Equal(deleting.ErrorResourceNotFound))
 			})
@@ -275,12 +248,6 @@ var _ = Describe("Deleter Service", func() {
 
 		When("failed remove file from disk", func() {
 			It("should return error", func() {
-				deleteFileFn.
-					EXPECT().
-					DeleteFile().
-					Return(deleteRes, nil).
-					Times(1)
-
 				fileManager.
 					EXPECT().
 					IsFileExists(gomock.Eq(ctx), gomock.Eq(isFileExistsParam)).
@@ -293,7 +260,7 @@ var _ = Describe("Deleter Service", func() {
 					Return(nil, fmt.Errorf("disk error")).
 					Times(1)
 
-				err := fn(ctx, deleteFileFn)
+				err := fn(ctx, deleteFnParam)
 
 				Expect(err).To(Equal(fmt.Errorf("disk error")))
 			})
@@ -301,12 +268,6 @@ var _ = Describe("Deleter Service", func() {
 
 		When("success remove file from disk", func() {
 			It("should return result", func() {
-				deleteFileFn.
-					EXPECT().
-					DeleteFile().
-					Return(deleteRes, nil).
-					Times(1)
-
 				fileManager.
 					EXPECT().
 					IsFileExists(gomock.Eq(ctx), gomock.Eq(isFileExistsParam)).
@@ -319,7 +280,7 @@ var _ = Describe("Deleter Service", func() {
 					Return(removeRes, nil).
 					Times(1)
 
-				err := fn(ctx, deleteFileFn)
+				err := fn(ctx, deleteFnParam)
 
 				Expect(err).To(BeNil())
 			})

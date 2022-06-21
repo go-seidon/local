@@ -6,7 +6,7 @@ import (
 )
 
 type (
-	DeleteFn func(ctx context.Context, f DeleteFileFn) error
+	DeleteFn func(ctx context.Context, p DeleteFnParam) error
 )
 
 type FileRepository interface {
@@ -17,11 +17,7 @@ type DeleteFileParam struct {
 	UniqueId string
 }
 
-type DeleteFileFn interface {
-	DeleteFile() (*DeleteFileFnResult, error)
-}
-
-type DeleteFileFnResult struct {
+type DeleteFnParam struct {
 	FilePath string
 }
 
