@@ -94,6 +94,8 @@ func NewHealthCheckHandler(log logging.Logger, serializer serialization.Serializ
 				Code:    CODE_ERROR,
 				Message: err.Error(),
 			})
+
+			w.WriteHeader(http.StatusBadRequest)
 		} else {
 			jobs := map[string]HealthCheckItem{}
 			for jobName, item := range r.Items {

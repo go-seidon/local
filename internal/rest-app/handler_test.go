@@ -250,6 +250,11 @@ var _ = Describe("Handler Package", func() {
 
 				w.
 					EXPECT().
+					WriteHeader(gomock.Eq(400)).
+					Times(1)
+
+				w.
+					EXPECT().
 					Write([]byte{}).
 					Times(1)
 
