@@ -1,5 +1,11 @@
+## sonar
 .scannerwork
-*.env
 *.out
+
+## golang
 vendor/*
 .vscode
+*.test
+
+## app
+*.env
