@@ -6,10 +6,13 @@ import (
 )
 
 type UploadFileParam struct {
-	FileData []byte
-	FileId   string
-	FileName string
-	FileSize int64
+	FileData            []byte
+	FileId              string
+	FileName            string
+	FileExtension       string
+	FileClientExtension string
+	FileMimetype        string
+	FileSize            uint32
 }
 
 type UploadFileResult struct {

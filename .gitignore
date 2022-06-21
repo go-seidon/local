@@ -1,9 +1,10 @@
-## sonar 
+## sonar
 .scannerwork
 *.out
 
 ## golang
 vendor/*
+.vscode
 *.test
 
 ## app
