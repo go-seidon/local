@@ -55,3 +55,7 @@ build-grpc-app:
 .PHONY: build-rest-app
 build-rest-app:
 	go build -o ./build/rest-app/ ./cmd/rest-app/main.go
+
+.PHONY: run-docker-dev
+run-docker-dev:
+	docker-compose up -d
