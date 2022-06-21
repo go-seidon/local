@@ -36,45 +36,54 @@ func (m *MockFileRepository) EXPECT() *MockFileRepositoryMockRecorder {
 }
 
 // DeleteFile mocks base method.
-func (m *MockFileRepository) DeleteFile(ctx context.Context, p repository.DeleteFileParam) (*repository.DeleteFileResult, error) {
+func (m *MockFileRepository) DeleteFile(ctx context.Context, p repository.DeleteFileParam, o repository.DeleteFileOpt) (*repository.DeleteFileResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteFile", ctx, p)
+	ret := m.ctrl.Call(m, "DeleteFile", ctx, p, o)
 	ret0, _ := ret[0].(*repository.DeleteFileResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DeleteFile indicates an expected call of DeleteFile.
-func (mr *MockFileRepositoryMockRecorder) DeleteFile(ctx, p interface{}) *gomock.Call {
+func (mr *MockFileRepositoryMockRecorder) DeleteFile(ctx, p, o interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockFileRepository)(nil).DeleteFile), ctx, p)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockFileRepository)(nil).DeleteFile), ctx, p, o)
 }
 
-// FindFile mocks base method.
-func (m *MockFileRepository) FindFile(ctx context.Context, p repository.FindFileParam) (*repository.FindFileResult, error) {
+// MockDeleteFileFn is a mock of DeleteFileFn interface.
+type MockDeleteFileFn struct {
+	ctrl     *gomock.Controller
+	recorder *MockDeleteFileFnMockRecorder
+}
+
+// MockDeleteFileFnMockRecorder is the mock recorder for MockDeleteFileFn.
+type MockDeleteFileFnMockRecorder struct {
+	mock *MockDeleteFileFn
+}
+
+// NewMockDeleteFileFn creates a new mock instance.
+func NewMockDeleteFileFn(ctrl *gomock.Controller) *MockDeleteFileFn {
+	mock := &MockDeleteFileFn{ctrl: ctrl}
+	mock.recorder = &MockDeleteFileFnMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockDeleteFileFn) EXPECT() *MockDeleteFileFnMockRecorder {
+	return m.recorder
+}
+
+// DeleteFile mocks base method.
+func (m *MockDeleteFileFn) DeleteFile() (*repository.DeleteFileFnResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindFile", ctx, p)
-	ret0, _ := ret[0].(*repository.FindFileResult)
+	ret := m.ctrl.Call(m, "DeleteFile")
+	ret0, _ := ret[0].(*repository.DeleteFileFnResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// FindFile indicates an expected call of FindFile.
-func (mr *MockFileRepositoryMockRecorder) FindFile(ctx, p interface{}) *gomock.Call {
+// DeleteFile indicates an expected call of DeleteFile.
+func (mr *MockDeleteFileFnMockRecorder) DeleteFile() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindFile", reflect.TypeOf((*MockFileRepository)(nil).FindFile), ctx, p)
-}
-
-// GetConnection mocks base method.
-func (m *MockFileRepository) GetConnection() repository.Connection {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConnection")
-	ret0, _ := ret[0].(repository.Connection)
-	return ret0
-}
-
-// GetConnection indicates an expected call of GetConnection.
-func (mr *MockFileRepositoryMockRecorder) GetConnection() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConnection", reflect.TypeOf((*MockFileRepository)(nil).GetConnection))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockDeleteFileFn)(nil).DeleteFile))
 }
