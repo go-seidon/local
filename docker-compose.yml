@@ -1,30 +1,37 @@
 version: '3'
 services:
-  mysql-database:
-    image: "mysql"
-    container_name: goseidon-local-mysql-db
+  mysql-db:
+    image: "mariadb:10.4"
+    container_name: mysql-db
     environment:
-        - DB_MYSQL_USERNAME=postgres
-        - DB_MYSQL_PASSWORD=abc123
-        - DB_MYSQL_NAME=goseidon_local
-        - MYSQL_ROOT_PASSWORD=toor
-        - MYSQL_ALLOW_EMPTY_PASSWORD=false
-        - MYSQL_RANDOM_ROOT_PASSWORD=false
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=123456
+      - MYSQL_DATABASE=goseidon_local
+      - MYSQL_ROOT_PASSWORD=toor
     volumes:
-      - mysql-database-data:/var/lib/mysql/
+      - mysql-db-data:/var/lib/mysql
     ports:
-        - "3310:3306"
-  mysql-test-database:
-      image: "mysql"
-      container_name: goseidon-local-mysql-db-test
-      environment:
-          - DB_MYSQL_USERNAME=postgres
-          - DB_MYSQL_PASSWORD=test
-          - DB_MYSQL_NAME=test
-          - MYSQL_ROOT_PASSWORD=test
-          - MYSQL_ALLOW_EMPTY_PASSWORD=false
-          - MYSQL_RANDOM_ROOT_PASSWORD=false
-      ports:
-          - "3307:3306"
+      - "3308:3306"
+  mysql-db-test:
+    image: "mariadb:10.4"
+    container_name: mysql-db-test
+    environment:
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=123456
+      - MYSQL_DATABASE=goseidon_local_test
+      - MYSQL_ROOT_PASSWORD=toor
+    ports:
+      - "3307:3306"
+  phpmyadmin:
+    image: "phpmyadmin:5.2"
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - 8010:80
+    environment:
+      - PMA_HOSTS=mysql-db,mysql-db-test
+    depends_on:
+      - mysql-db
+      - mysql-db-test
 volumes:
-  mysql-database-data:
+  mysql-db-data:
