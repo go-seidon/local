@@ -29,6 +29,38 @@ type deleter struct {
 	log         logging.Logger
 }
 
+func NewDeleteFn(fileManager explorer.FileManager) repository.DeleteFn {
+	return func(ctx context.Context, f repository.DeleteFileFn) error {
+		repoRes, err := f.DeleteFile()
+		if err != nil {
+			if errors.Is(err, repository.ErrorRecordNotFound) {
+				return ErrorResourceNotFound
+			}
+			return err
+		}
+
+		exists, err := fileManager.IsFileExists(ctx, explorer.IsFileExistsParam{
+			Path: repoRes.FilePath,
+		})
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return ErrorResourceNotFound
+		}
+
+		_, err = fileManager.RemoveFile(ctx, explorer.RemoveFileParam{
+			Path: repoRes.FilePath,
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
 func (s *deleter) DeleteFile(ctx context.Context, p DeleteFileParam) (*DeleteFileResult, error) {
 	s.log.Debug("In function: DeleteFile")
 	defer s.log.Debug("Returning function: DeleteFile")
@@ -37,60 +69,18 @@ func (s *deleter) DeleteFile(ctx context.Context, p DeleteFileParam) (*DeleteFil
 		return nil, fmt.Errorf("invalid file id parameter")
 	}
 
-	conn := s.fileRepo.GetConnection()
-	err := conn.Start(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	file, err := s.fileRepo.FindFile(ctx, repository.FindFileParam{
-		UniqueId:     p.FileId,
-		DbConnection: conn,
+	delRes, err := s.fileRepo.DeleteFile(ctx, repository.DeleteFileParam{
+		UniqueId: p.FileId,
+	}, repository.DeleteFileOpt{
+		DeleteFn: NewDeleteFn(s.fileManager),
 	})
+
 	if err != nil {
-		connErr := conn.Rollback(ctx)
-		if connErr != nil {
-			return nil, connErr
-		}
-
-		if errors.Is(err, repository.ErrorRecordNotFound) {
-			return nil, ErrorResourceNotFound
-		}
 		return nil, err
-	}
-
-	deleteRes, err := s.fileRepo.DeleteFile(ctx, repository.DeleteFileParam{
-		UniqueId:     file.UniqueId,
-		DbConnection: conn,
-	})
-	if err != nil {
-		connErr := conn.Rollback(ctx)
-		if connErr != nil {
-			return nil, connErr
-		}
-
-		return nil, err
-	}
-
-	_, err = s.fileManager.RemoveFile(ctx, explorer.RemoveFileParam{
-		Path: file.Path,
-	})
-	if err != nil {
-		connErr := conn.Rollback(ctx)
-		if connErr != nil {
-			return nil, connErr
-		}
-
-		return nil, err
-	}
-
-	connErr := conn.Commit(ctx)
-	if connErr != nil {
-		return nil, connErr
 	}
 
 	res := &DeleteFileResult{
-		DeletedAt: deleteRes.DeletedAt,
+		DeletedAt: delRes.DeletedAt,
 	}
 	return res, nil
 }
