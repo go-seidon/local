@@ -133,7 +133,7 @@ type findFileResult struct {
 
 func NewFileRepository(client *sql.DB) (*fileRepository, error) {
 	if client == nil {
-		return nil, fmt.Errorf("invalid repo client specified")
+		return nil, fmt.Errorf("invalid client specified")
 	}
 
 	r := &fileRepository{
