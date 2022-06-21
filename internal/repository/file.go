@@ -5,26 +5,28 @@ import (
 	"time"
 )
 
+type (
+	DeleteFn func(ctx context.Context, f DeleteFileFn) error
+)
+
 type FileRepository interface {
-	GetConnection() Connection
-	FindFile(ctx context.Context, p FindFileParam) (*FindFileResult, error)
-	DeleteFile(ctx context.Context, p DeleteFileParam) (*DeleteFileResult, error)
-}
-
-type FindFileParam struct {
-	UniqueId     string
-	DbConnection Connection
-}
-
-type FindFileResult struct {
-	UniqueId string
-	Name     string
-	Path     string
+	DeleteFile(ctx context.Context, p DeleteFileParam, o DeleteFileOpt) (*DeleteFileResult, error)
 }
 
 type DeleteFileParam struct {
-	UniqueId     string
-	DbConnection Connection
+	UniqueId string
+}
+
+type DeleteFileFn interface {
+	DeleteFile() (*DeleteFileFnResult, error)
+}
+
+type DeleteFileFnResult struct {
+	FilePath string
+}
+
+type DeleteFileOpt struct {
+	DeleteFn DeleteFn
 }
 
 type DeleteFileResult struct {
