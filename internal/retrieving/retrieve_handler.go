@@ -1,18 +1,20 @@
 package retrieving
 
 import (
+	"os"
+
 	"github.com/go-seidon/local/internal/uploading"
 )
 
 type RetrieveHandler struct{}
 
 func (o *RetrieveHandler) UploadFile(fileRepo uploading.FileRepository, filename string) (*FileResult, error) {
-	file, err := fileRepo.GetByFilename(filename)
+	file, err := fileRepo.GetByUniqueId(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	binaryFile, err := file.GetBinary()
+	binaryFile, err := o.GetBinary(file)
 	if err != nil {
 		return nil, err
 	}
@@ -31,4 +33,12 @@ func (o *RetrieveHandler) UploadFile(fileRepo uploading.FileRepository, filename
 	}
 
 	return resultDTO, nil
+}
+
+func (o *RetrieveHandler) GetBinary(file *uploading.File) ([]byte, error) {
+	binaryFile, err := os.ReadFile(file.GetFullpath())
+	if err != nil {
+		return nil, err
+	}
+	return binaryFile, nil
 }

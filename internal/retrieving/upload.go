@@ -12,7 +12,7 @@ type FileResult struct {
 	Mimetype        string
 	Extension       string
 	ClientExtension string
-	Size            uint64
+	Size            uint32
 	DirectoryPath   string
 	CreatedAt       time.Time
 	UpdatedAt       time.Time

@@ -1,13 +1,36 @@
 package uploading
 
 import (
-	"os"
+	"errors"
 	"time"
 )
 
-func NewFile() *File {
-	file := &File{}
-	return file
+func NewFile(
+	uniqueId string,
+	name string,
+	clientExtension string,
+	extension string,
+	mimetype string,
+	dir string,
+	size uint32,
+	createdAt time.Time,
+	updatedAt time.Time,
+) (*File, error) {
+	file := &File{
+		uniqueId:        uniqueId,
+		name:            name,
+		clientExtension: clientExtension,
+		extension:       extension,
+		mimetype:        mimetype,
+		dirpath:         dir,
+		size:            size,
+		createdAt:       createdAt,
+		updatedAt:       updatedAt,
+	}
+
+	err := file.Validate()
+
+	return file, err
 }
 
 type File struct {
@@ -16,18 +39,14 @@ type File struct {
 	clientExtension string
 	extension       string
 	mimetype        string
-	dir             string
+	dirpath         string
+	size            uint32
 	createdAt       time.Time
 	updatedAt       time.Time
-	binaryFile      []byte
-	size            *uint64
 }
 
-func (o *File) SetUniqueId(id string) *File {
-	if o.uniqueId != "" {
-		panic("already set unique id")
-	}
-	o.uniqueId = id
+func (o *File) SetUniqueId(uniqueId string) *File {
+	o.uniqueId = uniqueId
 	return o
 }
 
@@ -36,16 +55,28 @@ func (o *File) SetName(name string) *File {
 	return o
 }
 
-/**
- * This is extension from client that could be fake
- */
+func (o *File) SetExtension(ext string) *File {
+	o.extension = ext
+	return o
+}
+
 func (o *File) SetClientExtension(ext string) *File {
 	o.clientExtension = ext
 	return o
 }
 
-func (o *File) SetExtension(ext string) *File {
-	o.extension = ext
+func (o *File) SetMimetype(mimetype string) *File {
+	o.mimetype = mimetype
+	return o
+}
+
+func (o *File) SetDirpath(dirpath string) *File {
+	o.dirpath = dirpath
+	return o
+}
+
+func (o *File) SetSize(s uint32) *File {
+	o.size = s
 	return o
 }
 
@@ -59,38 +90,8 @@ func (o *File) SetUpdatedAt(t time.Time) *File {
 	return o
 }
 
-func (o *File) SetMimetype(m string) *File {
-	o.mimetype = m
-	return o
-}
-
-func (o *File) SetSize(s uint64) *File {
-	o.size = &s
-	return o
-}
-
-/**
- * This is full directory path e.g: /usr/local/bin
- */
-func (o *File) SetDirectoryPath(dir string) *File {
-	o.dir = dir
-	return o
-}
-
-func (o *File) GetBinary() ([]byte, error) {
-	binaryFile, err := os.ReadFile(o.GetFullpath())
-	if err != nil {
-		return nil, err
-	}
-	o.binaryFile = binaryFile
-	return binaryFile, nil
-}
-
 func (o *File) GetName() string {
-	if o.uniqueId == "" {
-		panic("unique id is needed")
-	}
-	return o.uniqueId + "_" + o.name
+	return o.name
 }
 
 func (o *File) GetClientExtension() string {
@@ -112,19 +113,16 @@ func (o *File) GetUniqueId() string {
 	return o.uniqueId
 }
 
-func (o *File) GetSize() uint64 {
-	return *o.size
+func (o *File) GetSize() uint32 {
+	return o.size
 }
 
 func (o *File) GetDirectoryPath() string {
-	return o.dir
+	return o.dirpath
 }
 
 func (o *File) GetFullpath() string {
-	if o.dir == "" {
-		panic("Dir need to set")
-	}
-	return o.dir + "/" + o.name
+	return o.dirpath + "/" + o.uniqueId
 }
 
 func (o *File) GetCreatedAt() time.Time {
@@ -135,6 +133,52 @@ func (o *File) GetUpdatedAt() time.Time {
 	return o.updatedAt
 }
 
-func (o *File) DeleteBinaryFileOnDisk() error {
-	return os.Remove(o.GetFullpath())
+func (o *File) Validate() error {
+	if o.uniqueId == "" {
+		return errors.New("uniqueId is mandatory")
+	}
+	if o.name == "" {
+		return errors.New("name is mandatory")
+	}
+	if o.extension == "" {
+		return errors.New("extension is mandatory")
+	}
+	if o.mimetype == "" {
+		return errors.New("mimetype is mandatory")
+	}
+	if o.dirpath == "" {
+		return errors.New("dirpath is mandatory")
+	}
+	if o.dirpath == "" {
+		return errors.New("dirpath is mandatory")
+	}
+	return nil
+}
+
+func (o *File) Clone() *File {
+	return &File{
+		uniqueId:        o.uniqueId,
+		name:            o.name,
+		clientExtension: o.clientExtension,
+		extension:       o.extension,
+		mimetype:        o.mimetype,
+		dirpath:         o.dirpath,
+		size:            o.size,
+		createdAt:       o.createdAt,
+		updatedAt:       o.updatedAt,
+	}
+}
+
+func (o *File) ToDTO() map[string]interface{} {
+	return map[string]interface{}{
+		"uniqueId":        o.uniqueId,
+		"name":            o.name,
+		"clientExtension": o.clientExtension,
+		"extension":       o.extension,
+		"mimetype":        o.mimetype,
+		"dirpath":         o.dirpath,
+		"size":            o.size,
+		"createdAt":       o.createdAt,
+		"updatedAt":       o.updatedAt,
+	}
 }

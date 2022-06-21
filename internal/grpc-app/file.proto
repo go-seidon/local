@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package file;
+
+option go_package = ".;pb";
+
+message UploadParam {
+  bytes Content = 1;
+  string Filename = 2;
+  string FileExtension = 3;
+  uint32 FileSize = 4;
+}
+
+service UploadService {
+  rpc Upload(stream UploadParam) returns (UploadResult) {}
+}
+
+enum UploadStatusCode {
+  Ok = 0;
+  Failed = 1;
+}
+
+message UploadResult {
+  string Message = 1;
+  UploadStatusCode Code = 2;
+}
