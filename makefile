@@ -32,6 +32,26 @@ test:
 	go test ./... -coverprofile coverage.out
 	go tool cover -func coverage.out | grep ^total:
 
+.PHONY: test-coverage
+test-coverage:
+	ginkgo -r -v -p -race --progress --randomize-all --randomize-suites -cover -coverprofile="coverage.out"
+
+.PHONY: test-unit
+test-unit:
+	ginkgo -r -v -p -race --label-filter="unit" -cover -coverprofile="coverage.out"
+
+.PHONY: test-integration
+test-integration:
+	ginkgo -r -v -p -race --label-filter="integration" -cover -coverprofile="coverage.out"
+
+.PHONY: test-watch-unit
+test-watch-unit:
+	ginkgo watch -r -v -p -race --trace --label-filter="unit"
+
+.PHONY: test-watch-integration
+test-watch-integration:
+	ginkgo watch -r -v -p -race --trace --label-filter="integration"
+
 .PHONY: generate-mock
 generate-mock:
 	mockgen -package=mock -source internal/logging/log.go -destination=internal/mock/logging_log_mock.go
@@ -59,3 +79,33 @@ build-rest-app:
 .PHONY: run-docker-dev
 run-docker-dev:
 	docker-compose up -d
+
+ifeq (migrate-mysql,$(firstword $(MAKECMDGOALS)))
+  # use the rest as arguments for "migrate-mysql"
+  MIGRATE_MYSQL_RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  # ...and turn them into do-nothing targets
+  $(eval $(MIGRATE_MYSQL_RUN_ARGS):dummy;@:)
+endif
+
+ifeq (migrate-mysql-create,$(firstword $(MAKECMDGOALS)))
+  # use the rest as arguments for "migrate-mysql-create"
+  MIGRATE_MYSQL_RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  # ...and turn them into do-nothing targets
+  $(eval $(MIGRATE_MYSQL_RUN_ARGS):dummy;@:)
+endif
+
+dummy: ## used by migrate script as do-nothing targets
+	@:
+
+
+MYSQL_DB_URI:='mysql://admin:123456@tcp(localhost:3308)/goseidon_local?x-tls-insecure-skip-verify=true'
+## wraps golang-migrate. Use with arguments such as 'up', 'down 2', 'version' etc. 
+## run 'migrate help for more info'
+
+.PHONY: migrate-mysql
+migrate-mysql:
+	migrate -database $(MYSQL_DB_URI) -path ./migration/mysql $(MIGRATE_MYSQL_RUN_ARGS)
+
+.PHONY: migrate-mysql-create
+migrate-mysql-create: ## creates migrations with one argument for a suffix
+	migrate create -dir migration/mysql -ext .sql $(MIGRATE_MYSQL_RUN_ARGS)
