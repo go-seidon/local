@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '^1.16'
+      - name: Installing package
+        run: go get github.com/onsi/ginkgo/v2
       - name: Generate code coverage
         run: make test-unit
       - name: SonarCloud Scan
