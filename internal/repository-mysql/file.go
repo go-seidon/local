@@ -10,11 +10,11 @@ import (
 	"github.com/go-seidon/local/internal/repository"
 )
 
-type fileRepository struct {
+type FileRepository struct {
 	client *sql.DB
 }
 
-func (r *fileRepository) DeleteFile(ctx context.Context, p repository.DeleteFileParam, o repository.DeleteFileOpt) (*repository.DeleteFileResult, error) {
+func (r *FileRepository) DeleteFile(ctx context.Context, p repository.DeleteFileParam, o repository.DeleteFileOpt) (*repository.DeleteFileResult, error) {
 	currentTimestamp := time.Now()
 
 	tx, err := r.client.BeginTx(ctx, &sql.TxOptions{
@@ -30,25 +30,35 @@ func (r *fileRepository) DeleteFile(ctx context.Context, p repository.DeleteFile
 		ShouldLock:    true,
 	})
 	if err != nil {
+		txErr := tx.Rollback()
+		if txErr != nil {
+			return nil, err
+		}
 		return nil, err
 	}
 
-	sqlQuery := `
-		UPDATE file 
-		SET deleted_at = $2 
-		WHERE unique_id = $1
-	`
-	qRes, err := tx.Exec(sqlQuery, file.UniqueId, currentTimestamp)
+	sqlQuery := fmt.Sprintf(
+		"UPDATE file SET deleted_at = '%s' WHERE unique_id = '%s'",
+		currentTimestamp.Format("2006-01-02 15:04:05"),
+		file.UniqueId,
+	)
+	qRes, err := tx.Exec(sqlQuery)
 	if err != nil {
+		txErr := tx.Rollback()
+		if txErr != nil {
+			return nil, err
+		}
 		return nil, err
 	}
 
-	totalAffected, err := qRes.RowsAffected()
-	if err != nil {
-		return nil, err
-	}
+	// error is ommited since mysql driver is able to returning totalAffected
+	totalAffected, _ := qRes.RowsAffected()
 
 	if totalAffected != 1 {
+		txErr := tx.Rollback()
+		if txErr != nil {
+			return nil, err
+		}
 		return nil, fmt.Errorf("record is not updated")
 	}
 
@@ -56,6 +66,15 @@ func (r *fileRepository) DeleteFile(ctx context.Context, p repository.DeleteFile
 		FilePath: file.Path,
 	})
 	if err != nil {
+		txErr := tx.Rollback()
+		if txErr != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	txErr := tx.Commit()
+	if txErr != nil {
 		return nil, err
 	}
 
@@ -65,7 +84,7 @@ func (r *fileRepository) DeleteFile(ctx context.Context, p repository.DeleteFile
 	return res, nil
 }
 
-func (r *fileRepository) findFile(ctx context.Context, p findFileParam) (*findFileResult, error) {
+func (r *FileRepository) findFile(ctx context.Context, p findFileParam) (*findFileResult, error) {
 	var client Client
 	client = r.client
 
@@ -76,26 +95,17 @@ func (r *fileRepository) findFile(ctx context.Context, p findFileParam) (*findFi
 	sqlQuery := `
 		SELECT 
 			unique_id, name, path,
-			mimetype, extension, size
+			mimetype, extension, size,
 			created_at, updated_at, deleted_at
-		FROM file 
+		FROM file
+		WHERE unique_id = ?
 	`
 	if p.ShouldLock {
-		sqlQuery += ` LOCK FOR UPDATE `
-	}
-	sqlQuery += ` WHERE unique_id = $1 `
-
-	row := client.QueryRow(sqlQuery, p.UniqueId)
-	err := row.Err()
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, repository.ErrorRecordNotFound
-		}
-		return nil, err
+		sqlQuery += ` FOR UPDATE `
 	}
 
-	var res *findFileResult
-	err = row.Scan(
+	var res findFileResult
+	err := client.QueryRow(sqlQuery, p.UniqueId).Scan(
 		&res.UniqueId,
 		&res.Name,
 		&res.Path,
@@ -106,11 +116,14 @@ func (r *fileRepository) findFile(ctx context.Context, p findFileParam) (*findFi
 		&res.UpdatedAt,
 		&res.DeletedAt,
 	)
-	if err != nil {
-		return nil, err
+	if err == nil {
+		return &res, nil
 	}
 
-	return res, nil
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, repository.ErrorRecordNotFound
+	}
+	return nil, err
 }
 
 type findFileParam struct {
@@ -131,12 +144,12 @@ type findFileResult struct {
 	DeletedAt *time.Time
 }
 
-func NewFileRepository(client *sql.DB) (*fileRepository, error) {
+func NewFileRepository(client *sql.DB) (*FileRepository, error) {
 	if client == nil {
 		return nil, fmt.Errorf("invalid client specified")
 	}
 
-	r := &fileRepository{
+	r := &FileRepository{
 		client: client,
 	}
 	return r, nil
