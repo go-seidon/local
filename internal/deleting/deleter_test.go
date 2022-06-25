@@ -90,14 +90,9 @@ var _ = Describe("Deleter Service", func() {
 			fileRepo    *mock.MockFileRepository
 			fileManager *mock.MockFileManager
 			log         *mock.MockLogger
-			dbConn      *mock.MockConnection
 			s           deleting.Deleter
-			findParam   repository.FindFileParam
-			findRes     *repository.FindFileResult
 			deleteParam repository.DeleteFileParam
 			deleteRes   *repository.DeleteFileResult
-			removeParam explorer.RemoveFileParam
-			removeRes   *explorer.RemoveFileResult
 			finalRes    *deleting.DeleteFileResult
 		)
 
@@ -112,33 +107,16 @@ var _ = Describe("Deleter Service", func() {
 			fileRepo = mock.NewMockFileRepository(ctrl)
 			fileManager = mock.NewMockFileManager(ctrl)
 			log = mock.NewMockLogger(ctrl)
-			dbConn = mock.NewMockConnection(ctrl)
 			s, _ = deleting.NewDeleter(deleting.NewDeleterParam{
 				FileRepo:    fileRepo,
 				FileManager: fileManager,
 				Logger:      log,
 			})
-			findParam = repository.FindFileParam{
-				UniqueId:     p.FileId,
-				DbConnection: dbConn,
-			}
-			findRes = &repository.FindFileResult{
-				UniqueId: "mock-unique-id",
-				Name:     "mock-file-name",
-				Path:     "mock/path",
-			}
 			deleteParam = repository.DeleteFileParam{
-				UniqueId:     findRes.UniqueId,
-				DbConnection: dbConn,
+				UniqueId: p.FileId,
 			}
 			deleteRes = &repository.DeleteFileResult{
 				DeletedAt: currentTimestamp,
-			}
-			removeParam = explorer.RemoveFileParam{
-				Path: findRes.Path,
-			}
-			removeRes = &explorer.RemoveFileResult{
-				RemovedAt: currentTimestamp,
 			}
 			finalRes = &deleting.DeleteFileResult{
 				DeletedAt: currentTimestamp,
@@ -162,81 +140,27 @@ var _ = Describe("Deleter Service", func() {
 			})
 		})
 
-		When("failed start db transaction", func() {
+		When("failed delete file", func() {
 			It("should return error", func() {
 				fileRepo.
 					EXPECT().
-					GetConnection().
-					Return(dbConn).
-					Times(1)
-				dbConn.
-					EXPECT().
-					Start(gomock.Eq(ctx)).
-					Return(fmt.Errorf("network error")).
+					DeleteFile(gomock.Eq(ctx), gomock.Eq(deleteParam), gomock.Any()).
+					Return(nil, fmt.Errorf("failed delete file")).
 					Times(1)
 
 				res, err := s.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("network error")))
+				Expect(err).To(Equal(fmt.Errorf("failed delete file")))
 			})
 		})
 
-		When("failed rollback find file query", func() {
+		When("file is not available", func() {
 			It("should return error", func() {
 				fileRepo.
 					EXPECT().
-					GetConnection().
-					Return(dbConn).
-					Times(1)
-				dbConn.
-					EXPECT().
-					Start(gomock.Eq(ctx)).
-					Return(nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					FindFile(gomock.Eq(ctx), gomock.Eq(findParam)).
-					Return(nil, fmt.Errorf("some error")).
-					Times(1)
-
-				dbConn.
-					EXPECT().
-					Rollback(gomock.Eq(ctx)).
-					Return(fmt.Errorf("rollback error")).
-					Times(1)
-
-				res, err := s.DeleteFile(ctx, p)
-
-				Expect(res).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("rollback error")))
-			})
-		})
-
-		When("file is not available in database", func() {
-			It("should return error", func() {
-				fileRepo.
-					EXPECT().
-					GetConnection().
-					Return(dbConn).
-					Times(1)
-				dbConn.
-					EXPECT().
-					Start(gomock.Eq(ctx)).
-					Return(nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					FindFile(gomock.Eq(ctx), gomock.Eq(findParam)).
+					DeleteFile(gomock.Eq(ctx), gomock.Eq(deleteParam), gomock.Any()).
 					Return(nil, repository.ErrorRecordNotFound).
-					Times(1)
-
-				dbConn.
-					EXPECT().
-					Rollback(gomock.Eq(ctx)).
-					Return(nil).
 					Times(1)
 
 				res, err := s.DeleteFile(ctx, p)
@@ -246,286 +170,118 @@ var _ = Describe("Deleter Service", func() {
 			})
 		})
 
-		When("failed find file in database", func() {
-			It("should return error", func() {
+		When("failed success file", func() {
+			It("should return result", func() {
 				fileRepo.
 					EXPECT().
-					GetConnection().
-					Return(dbConn).
-					Times(1)
-				dbConn.
-					EXPECT().
-					Start(gomock.Eq(ctx)).
-					Return(nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					FindFile(gomock.Eq(ctx), gomock.Eq(findParam)).
-					Return(nil, fmt.Errorf("network error")).
-					Times(1)
-
-				dbConn.
-					EXPECT().
-					Rollback(gomock.Eq(ctx)).
-					Return(nil).
-					Times(1)
-
-				res, err := s.DeleteFile(ctx, p)
-
-				Expect(res).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("network error")))
-			})
-		})
-
-		When("failed rollback delete file query", func() {
-			It("should return error", func() {
-				fileRepo.
-					EXPECT().
-					GetConnection().
-					Return(dbConn).
-					Times(1)
-				dbConn.
-					EXPECT().
-					Start(gomock.Eq(ctx)).
-					Return(nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					FindFile(gomock.Eq(ctx), gomock.Eq(findParam)).
-					Return(findRes, nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					DeleteFile(gomock.Eq(ctx), gomock.Eq(deleteParam)).
-					Return(nil, fmt.Errorf("db error")).
-					Times(1)
-
-				dbConn.
-					EXPECT().
-					Rollback(gomock.Eq(ctx)).
-					Return(fmt.Errorf("rollback error")).
-					Times(1)
-
-				res, err := s.DeleteFile(ctx, p)
-
-				Expect(res).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("rollback error")))
-			})
-		})
-
-		When("failed delete file in database", func() {
-			It("should return error", func() {
-				fileRepo.
-					EXPECT().
-					GetConnection().
-					Return(dbConn).
-					Times(1)
-				dbConn.
-					EXPECT().
-					Start(gomock.Eq(ctx)).
-					Return(nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					FindFile(gomock.Eq(ctx), gomock.Eq(findParam)).
-					Return(findRes, nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					DeleteFile(gomock.Eq(ctx), gomock.Eq(deleteParam)).
-					Return(nil, fmt.Errorf("db error")).
-					Times(1)
-
-				dbConn.
-					EXPECT().
-					Rollback(gomock.Eq(ctx)).
-					Return(nil).
-					Times(1)
-
-				res, err := s.DeleteFile(ctx, p)
-
-				Expect(res).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("db error")))
-			})
-		})
-
-		When("failed rollback remove disk file", func() {
-			It("should return error", func() {
-				fileRepo.
-					EXPECT().
-					GetConnection().
-					Return(dbConn).
-					Times(1)
-				dbConn.
-					EXPECT().
-					Start(gomock.Eq(ctx)).
-					Return(nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					FindFile(gomock.Eq(ctx), gomock.Eq(findParam)).
-					Return(findRes, nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					DeleteFile(gomock.Eq(ctx), gomock.Eq(deleteParam)).
+					DeleteFile(gomock.Eq(ctx), gomock.Eq(deleteParam), gomock.Any()).
 					Return(deleteRes, nil).
-					Times(1)
-
-				fileManager.
-					EXPECT().
-					RemoveFile(gomock.Eq(ctx), gomock.Eq(removeParam)).
-					Return(nil, fmt.Errorf("r/w error")).
-					Times(1)
-
-				dbConn.
-					EXPECT().
-					Rollback(gomock.Eq(ctx)).
-					Return(fmt.Errorf("rollback error")).
-					Times(1)
-
-				res, err := s.DeleteFile(ctx, p)
-
-				Expect(res).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("rollback error")))
-			})
-		})
-
-		When("failed remove disk file", func() {
-			It("should return error", func() {
-				fileRepo.
-					EXPECT().
-					GetConnection().
-					Return(dbConn).
-					Times(1)
-				dbConn.
-					EXPECT().
-					Start(gomock.Eq(ctx)).
-					Return(nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					FindFile(gomock.Eq(ctx), gomock.Eq(findParam)).
-					Return(findRes, nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					DeleteFile(gomock.Eq(ctx), gomock.Eq(deleteParam)).
-					Return(deleteRes, nil).
-					Times(1)
-
-				fileManager.
-					EXPECT().
-					RemoveFile(gomock.Eq(ctx), gomock.Eq(removeParam)).
-					Return(nil, fmt.Errorf("r/w error")).
-					Times(1)
-
-				dbConn.
-					EXPECT().
-					Rollback(gomock.Eq(ctx)).
-					Return(nil).
-					Times(1)
-
-				res, err := s.DeleteFile(ctx, p)
-
-				Expect(res).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("r/w error")))
-			})
-		})
-
-		When("failed commit transaction", func() {
-			It("should return error", func() {
-				fileRepo.
-					EXPECT().
-					GetConnection().
-					Return(dbConn).
-					Times(1)
-				dbConn.
-					EXPECT().
-					Start(gomock.Eq(ctx)).
-					Return(nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					FindFile(gomock.Eq(ctx), gomock.Eq(findParam)).
-					Return(findRes, nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					DeleteFile(gomock.Eq(ctx), gomock.Eq(deleteParam)).
-					Return(deleteRes, nil).
-					Times(1)
-
-				fileManager.
-					EXPECT().
-					RemoveFile(gomock.Eq(ctx), gomock.Eq(removeParam)).
-					Return(removeRes, nil).
-					Times(1)
-
-				dbConn.
-					EXPECT().
-					Commit(gomock.Eq(ctx)).
-					Return(fmt.Errorf("commit error")).
-					Times(1)
-
-				res, err := s.DeleteFile(ctx, p)
-
-				Expect(res).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("commit error")))
-			})
-		})
-
-		When("success delete file", func() {
-			It("should return error", func() {
-				fileRepo.
-					EXPECT().
-					GetConnection().
-					Return(dbConn).
-					Times(1)
-				dbConn.
-					EXPECT().
-					Start(gomock.Eq(ctx)).
-					Return(nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					FindFile(gomock.Eq(ctx), gomock.Eq(findParam)).
-					Return(findRes, nil).
-					Times(1)
-
-				fileRepo.
-					EXPECT().
-					DeleteFile(gomock.Eq(ctx), gomock.Eq(deleteParam)).
-					Return(deleteRes, nil).
-					Times(1)
-
-				fileManager.
-					EXPECT().
-					RemoveFile(gomock.Eq(ctx), gomock.Eq(removeParam)).
-					Return(removeRes, nil).
-					Times(1)
-
-				dbConn.
-					EXPECT().
-					Commit(gomock.Eq(ctx)).
-					Return(nil).
 					Times(1)
 
 				res, err := s.DeleteFile(ctx, p)
 
 				Expect(res).To(Equal(finalRes))
+				Expect(err).To(BeNil())
+			})
+		})
+	})
+
+	Context("NewDeleteFn function", func() {
+		var (
+			ctx               context.Context
+			fileManager       *mock.MockFileManager
+			fn                repository.DeleteFn
+			deleteFnParam     repository.DeleteFnParam
+			isFileExistsParam explorer.IsFileExistsParam
+			removeParam       explorer.RemoveFileParam
+			removeRes         *explorer.RemoveFileResult
+		)
+
+		BeforeEach(func() {
+			currentTimestamp := time.Now()
+			ctx = context.Background()
+			t := GinkgoT()
+			ctrl := gomock.NewController(t)
+			fileManager = mock.NewMockFileManager(ctrl)
+			fn = deleting.NewDeleteFn(fileManager)
+			deleteFnParam = repository.DeleteFnParam{
+				FilePath: "mock/path",
+			}
+			isFileExistsParam = explorer.IsFileExistsParam{
+				Path: deleteFnParam.FilePath,
+			}
+			removeParam = explorer.RemoveFileParam{
+				Path: deleteFnParam.FilePath,
+			}
+			removeRes = &explorer.RemoveFileResult{
+				RemovedAt: currentTimestamp,
+			}
+		})
+
+		When("failed check file existstance", func() {
+			It("should return error", func() {
+				fileManager.
+					EXPECT().
+					IsFileExists(gomock.Eq(ctx), gomock.Eq(isFileExistsParam)).
+					Return(false, fmt.Errorf("failed read disk")).
+					Times(1)
+
+				err := fn(ctx, deleteFnParam)
+
+				Expect(err).To(Equal(fmt.Errorf("failed read disk")))
+			})
+		})
+
+		When("file is not available in disk", func() {
+			It("should return error", func() {
+				fileManager.
+					EXPECT().
+					IsFileExists(gomock.Eq(ctx), gomock.Eq(isFileExistsParam)).
+					Return(false, nil).
+					Times(1)
+
+				err := fn(ctx, deleteFnParam)
+
+				Expect(err).To(Equal(deleting.ErrorResourceNotFound))
+			})
+		})
+
+		When("failed remove file from disk", func() {
+			It("should return error", func() {
+				fileManager.
+					EXPECT().
+					IsFileExists(gomock.Eq(ctx), gomock.Eq(isFileExistsParam)).
+					Return(true, nil).
+					Times(1)
+
+				fileManager.
+					EXPECT().
+					RemoveFile(gomock.Eq(ctx), gomock.Eq(removeParam)).
+					Return(nil, fmt.Errorf("disk error")).
+					Times(1)
+
+				err := fn(ctx, deleteFnParam)
+
+				Expect(err).To(Equal(fmt.Errorf("disk error")))
+			})
+		})
+
+		When("success remove file from disk", func() {
+			It("should return result", func() {
+				fileManager.
+					EXPECT().
+					IsFileExists(gomock.Eq(ctx), gomock.Eq(isFileExistsParam)).
+					Return(true, nil).
+					Times(1)
+
+				fileManager.
+					EXPECT().
+					RemoveFile(gomock.Eq(ctx), gomock.Eq(removeParam)).
+					Return(removeRes, nil).
+					Times(1)
+
+				err := fn(ctx, deleteFnParam)
+
 				Expect(err).To(BeNil())
 			})
 		})
