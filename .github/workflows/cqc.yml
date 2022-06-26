@@ -12,16 +12,16 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-    mysql:
-      image: mariadb:10.4
-      env:
-        MYSQL_USER: admin
-        MYSQL_PASSWORD: 123456
-        MYSQL_DATABASE: goseidon_local_test
-        MYSQL_ROOT_PASSWORD: toor
-      ports:
-        - 3307:3306
-      options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+      mysql:
+        image: mariadb:10.4
+        ports:
+          - 3307:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+        env:
+          MYSQL_USER: admin
+          MYSQL_PASSWORD: 123456
+          MYSQL_DATABASE: goseidon_local_test
+          MYSQL_ROOT_PASSWORD: toor
 
     steps:
       - name: Checkout code
@@ -39,7 +39,7 @@ jobs:
           which migrate
       - name: Run MySQL migration
         run: make migrate-mysql up
-      - name: Generate code coverage
+      - name: Run test
         run: make test
 
   scan:
