@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-seidon/local/internal/repository"
 	repository_mysql "github.com/go-seidon/local/internal/repository-mysql"
-	"github.com/go-sql-driver/mysql"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -89,21 +88,6 @@ var _ = Describe("File Repository", func() {
 
 		AfterAll(func() {
 			client.Close()
-		})
-
-		When("failed start db transaction", func() {
-			It("should return error", func() {
-				invalidClient, _ := OpenDb("invalid_username:invalid_password@tcp(localhost:3307)/invalid_database")
-				invalidRepo, _ := repository_mysql.NewFileRepository(invalidClient)
-				res, err := invalidRepo.DeleteFile(ctx, p, o)
-
-				expectedErr := &mysql.MySQLError{
-					Number:  1045,
-					Message: "Access denied for user 'invalid_username'@'172.31.0.1' (using password: YES)",
-				}
-				Expect(res).To(BeNil())
-				Expect(err).To(Equal(expectedErr))
-			})
 		})
 
 		When("file record is not available", func() {

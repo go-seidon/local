@@ -98,14 +98,12 @@ dummy: ## used by migrate script as do-nothing targets
 	@:
 
 
-MYSQL_DB_URI:='mysql://admin:123456@tcp(localhost:3308)/goseidon_local?x-tls-insecure-skip-verify=true'
-## wraps golang-migrate. Use with arguments such as 'up', 'down 2', 'version' etc. 
-## run 'migrate help for more info'
+MYSQL_DB_URI=mysql://admin:123456@tcp(localhost:3308)/goseidon_local?x-tls-insecure-skip-verify=true
 
 .PHONY: migrate-mysql
 migrate-mysql:
-	migrate -database $(MYSQL_DB_URI) -path ./migration/mysql $(MIGRATE_MYSQL_RUN_ARGS)
+	migrate -database "$(MYSQL_DB_URI)" -path ./migration/mysql $(MIGRATE_MYSQL_RUN_ARGS)
 
 .PHONY: migrate-mysql-create
-migrate-mysql-create: ## creates migrations with one argument for a suffix
+migrate-mysql-create:
 	migrate create -dir migration/mysql -ext .sql $(MIGRATE_MYSQL_RUN_ARGS)
