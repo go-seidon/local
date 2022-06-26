@@ -38,7 +38,7 @@ jobs:
           sudo mv migrate /usr/bin/
           which migrate
       - name: Run MySQL migration
-        run: make migrate-mysql up
+        run: migrate -database mysql://admin:123456@tcp(localhost:3308)/goseidon_local?x-tls-insecure-skip-verify=true -path ./migration/mysql up
       - name: Run test
         run: make test
 
