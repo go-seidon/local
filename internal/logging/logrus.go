@@ -22,9 +22,15 @@ func (l *logrusLog) Debug(format string, args ...interface{}) error {
 	return nil
 }
 
+func (l *logrusLog) Error(format string, args ...interface{}) error {
+	l.client.Errorf(format, args...)
+	return nil
+}
+
 type LogClient interface {
 	Infof(format string, args ...interface{})
 	Debugf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
 }
 
 type NewLogrusLogOption struct {
