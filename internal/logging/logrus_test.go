@@ -10,7 +10,7 @@ import (
 
 var _ = Describe("Logrus Package", func() {
 
-	Context("NewLogrusLog function", func() {
+	Context("NewLogrusLog function", Label("unit"), func() {
 		var (
 			opt *logging.NewLogrusLogOption
 		)
@@ -24,7 +24,7 @@ var _ = Describe("Logrus Package", func() {
 			})
 		})
 
-		When("all parameter is specified", func() {
+		When("all parameter are specified", func() {
 			It("should return result", func() {
 				opt = &logging.NewLogrusLogOption{
 					AppName:    "mock-name",
@@ -38,7 +38,7 @@ var _ = Describe("Logrus Package", func() {
 		})
 	})
 
-	Context("Info function", func() {
+	Context("Info function", Label("unit"), func() {
 		var (
 			logger logging.Logger
 		)
@@ -59,7 +59,7 @@ var _ = Describe("Logrus Package", func() {
 		})
 	})
 
-	Context("Debug function", func() {
+	Context("Debug function", Label("unit"), func() {
 		var (
 			logger logging.Logger
 		)
@@ -74,6 +74,27 @@ var _ = Describe("Logrus Package", func() {
 		When("success send log", func() {
 			It("should return nil", func() {
 				err := logger.Debug("mock-log")
+
+				Expect(err).To(BeNil())
+			})
+		})
+	})
+
+	Context("Error function", Label("unit"), func() {
+		var (
+			logger logging.Logger
+		)
+
+		BeforeEach(func() {
+			logger, _ = logging.NewLogrusLog(&logging.NewLogrusLogOption{
+				AppName:    "mock-name",
+				AppVersion: "mock-version",
+			})
+		})
+
+		When("success send log", func() {
+			It("should return nil", func() {
+				err := logger.Error("mock-log")
 
 				Expect(err).To(BeNil())
 			})
