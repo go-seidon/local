@@ -25,7 +25,7 @@ func (app *restApp) Run() error {
 		return err
 	}
 
-	healthService, err := healthcheck.NewHealthService(healthJobs)
+	healthService, err := healthcheck.NewGoHealthCheck(healthJobs)
 	if err != nil {
 		return err
 	}

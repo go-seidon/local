@@ -80,7 +80,7 @@ type HealthCheckResponse struct {
 	Details map[string]HealthCheckItem `json:"details"`
 }
 
-func NewHealthCheckHandler(log logging.Logger, serializer serialization.Serializer, healthService healthcheck.HealthService) http.HandlerFunc {
+func NewHealthCheckHandler(log logging.Logger, serializer serialization.Serializer, healthService healthcheck.HealthCheck) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.Debug("In function: HealthCheckHandler")
 		defer log.Debug("Returning function: HealthCheckHandler")

@@ -1,10 +1,7 @@
 package healthcheck
 
 import (
-	"fmt"
 	"time"
-
-	"github.com/InVisionApp/go-health"
 )
 
 const (
@@ -13,10 +10,15 @@ const (
 	STATUS_FAILED  = "FAILED"
 )
 
-type HealthService interface {
+type HealthCheck interface {
 	Start() error
 	Stop() error
 	Check() (*CheckResult, error)
+}
+
+type CheckResult struct {
+	Status string
+	Items  map[string]CheckResultItem
 }
 
 type CheckResultItem struct {
@@ -26,23 +28,4 @@ type CheckResultItem struct {
 	Fatal     bool
 	Metadata  interface{}
 	CheckedAt time.Time
-}
-
-type CheckResult struct {
-	Status string
-	Items  map[string]CheckResultItem
-}
-
-func NewHealthService(jobs []*HealthJob) (*GoHealthService, error) {
-	if len(jobs) == 0 {
-		return nil, fmt.Errorf("invalid jobs specified")
-	}
-
-	c := health.New()
-
-	s := &GoHealthService{
-		Client: c,
-		jobs:   jobs,
-	}
-	return s, nil
 }

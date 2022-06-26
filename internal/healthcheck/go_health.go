@@ -1,8 +1,12 @@
 package healthcheck
 
-import "github.com/InVisionApp/go-health"
+import (
+	"fmt"
 
-type GoHealthService struct {
+	"github.com/InVisionApp/go-health"
+)
+
+type GoHealthCheck struct {
 	Client HealthClient
 	jobs   []*HealthJob
 }
@@ -14,7 +18,7 @@ type HealthClient interface {
 	State() (map[string]health.State, bool, error)
 }
 
-func (s *GoHealthService) Start() error {
+func (s *GoHealthCheck) Start() error {
 
 	cfgs := []*health.Config{}
 	for _, job := range s.jobs {
@@ -32,11 +36,11 @@ func (s *GoHealthService) Start() error {
 	return s.Client.Start()
 }
 
-func (s *GoHealthService) Stop() error {
+func (s *GoHealthCheck) Stop() error {
 	return s.Client.Stop()
 }
 
-func (s *GoHealthService) Check() (*CheckResult, error) {
+func (s *GoHealthCheck) Check() (*CheckResult, error) {
 	states, isFailed, err := s.Client.State()
 	if err != nil {
 		return nil, err
@@ -75,4 +79,18 @@ func (s *GoHealthService) Check() (*CheckResult, error) {
 	}
 
 	return res, nil
+}
+
+func NewGoHealthCheck(jobs []*HealthJob) (*GoHealthCheck, error) {
+	if len(jobs) == 0 {
+		return nil, fmt.Errorf("invalid jobs specified")
+	}
+
+	c := health.New()
+
+	s := &GoHealthCheck{
+		Client: c,
+		jobs:   jobs,
+	}
+	return s, nil
 }
