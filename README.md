@@ -7,8 +7,7 @@
 No doc right now
 
 ## Todo
-1. Remove `*Service` suffix from `HealthCheck`
-2. Implement rest app: Delete File handler
+1. Implement rest app: Delete File handler
 
 ## Technical Stack
 1. Transport layer
