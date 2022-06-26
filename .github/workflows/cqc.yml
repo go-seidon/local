@@ -34,8 +34,8 @@ jobs:
           go-version: '^1.16'
       - name: Install golang migrate
         run: |
-          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-arm64.tar.gz | tar xvz
-          sudo mv migrate /usr/bin/
+          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.14.1/migrate.linux-amd64.tar.gz | tar xvz
+          sudo mv migrate.linux-amd64 /usr/bin/migrate
           which migrate
       - name: Run MySQL migration
         run: migrate -database 'mysql://admin:123456@tcp(localhost:3308)/goseidon_local_test?x-tls-insecure-skip-verify=true' -path ./migration/mysql up
