@@ -1,0 +1,54 @@
+name: Code Quality Check
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test: 
+    name: Code Test
+    runs-on: ubuntu-latest
+
+    services:
+    mysql:
+      image: mariadb:10.4
+      env:
+        MYSQL_USER: admin
+        MYSQL_PASSWORD: 123456
+        MYSQL_DATABASE: goseidon_local_test
+        MYSQL_ROOT_PASSWORD: toor
+      ports:
+        - 3307:3306
+      options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Setup golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+      - name: Install golang migrate
+        run: |
+          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-arm64.tar.gz | tar xvz
+          sudo mv migrate.linux-arm64 /usr/bin/migrate
+          which migrate
+      - name: Run MySQL migration
+        run: make migrate-mysql up
+      - name: Generate code coverage
+        run: make test
+
+  scan:
+    name: Code Scan
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
