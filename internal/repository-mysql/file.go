@@ -5,17 +5,18 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
+	"github.com/go-seidon/local/internal/datetime"
 	"github.com/go-seidon/local/internal/repository"
 )
 
 type FileRepository struct {
 	client *sql.DB
+	Clock  datetime.Clock
 }
 
 func (r *FileRepository) DeleteFile(ctx context.Context, p repository.DeleteFileParam, o repository.DeleteFileOpt) (*repository.DeleteFileResult, error) {
-	currentTimestamp := time.Now()
+	currentTimestamp := r.Clock.Now()
 
 	tx, err := r.client.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelRepeatableRead,
@@ -32,32 +33,31 @@ func (r *FileRepository) DeleteFile(ctx context.Context, p repository.DeleteFile
 	if err != nil {
 		txErr := tx.Rollback()
 		if txErr != nil {
-			return nil, err
+			return nil, txErr
 		}
 		return nil, err
 	}
 
 	sqlQuery := fmt.Sprintf(
-		"UPDATE file SET deleted_at = '%s' WHERE unique_id = '%s'",
-		currentTimestamp.Format("2006-01-02 15:04:05"),
+		"UPDATE file SET deleted_at = '%d' WHERE unique_id = '%s'",
+		currentTimestamp.UnixMilli(),
 		file.UniqueId,
 	)
 	qRes, err := tx.Exec(sqlQuery)
 	if err != nil {
 		txErr := tx.Rollback()
 		if txErr != nil {
-			return nil, err
+			return nil, txErr
 		}
 		return nil, err
 	}
 
 	// error is ommited since mysql driver is able to returning totalAffected
 	totalAffected, _ := qRes.RowsAffected()
-
 	if totalAffected != 1 {
 		txErr := tx.Rollback()
 		if txErr != nil {
-			return nil, err
+			return nil, txErr
 		}
 		return nil, fmt.Errorf("record is not updated")
 	}
@@ -68,14 +68,14 @@ func (r *FileRepository) DeleteFile(ctx context.Context, p repository.DeleteFile
 	if err != nil {
 		txErr := tx.Rollback()
 		if txErr != nil {
-			return nil, err
+			return nil, txErr
 		}
 		return nil, err
 	}
 
 	txErr := tx.Commit()
 	if txErr != nil {
-		return nil, err
+		return nil, txErr
 	}
 
 	res := &repository.DeleteFileResult{
@@ -85,11 +85,11 @@ func (r *FileRepository) DeleteFile(ctx context.Context, p repository.DeleteFile
 }
 
 func (r *FileRepository) findFile(ctx context.Context, p findFileParam) (*findFileResult, error) {
-	var client Client
-	client = r.client
+	var q Query
+	q = r.client
 
 	if p.DbTransaction != nil {
-		client = p.DbTransaction
+		q = p.DbTransaction
 	}
 
 	sqlQuery := `
@@ -105,7 +105,8 @@ func (r *FileRepository) findFile(ctx context.Context, p findFileParam) (*findFi
 	}
 
 	var res findFileResult
-	err := client.QueryRow(sqlQuery, p.UniqueId).Scan(
+	row := q.QueryRow(sqlQuery, p.UniqueId)
+	err := row.Scan(
 		&res.UniqueId,
 		&res.Name,
 		&res.Path,
@@ -139,9 +140,9 @@ type findFileResult struct {
 	MimeType  string
 	Extension string
 	Size      int64
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt *time.Time
+	CreatedAt int64
+	UpdatedAt int64
+	DeletedAt *int64
 }
 
 func NewFileRepository(client *sql.DB) (*FileRepository, error) {
@@ -149,8 +150,10 @@ func NewFileRepository(client *sql.DB) (*FileRepository, error) {
 		return nil, fmt.Errorf("invalid client specified")
 	}
 
+	clock := datetime.NewClock()
 	r := &FileRepository{
 		client: client,
+		Clock:  clock,
 	}
 	return r, nil
 }

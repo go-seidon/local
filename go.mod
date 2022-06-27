@@ -3,6 +3,7 @@ module github.com/go-seidon/local
 go 1.16
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/InVisionApp/go-health v2.1.0+incompatible
 	github.com/InVisionApp/go-logger v1.0.1 // indirect
 	github.com/TV4/logrus-stackdriver-formatter v0.1.0

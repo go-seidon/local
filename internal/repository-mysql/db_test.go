@@ -47,11 +47,13 @@ type InsertDummyFileParam struct {
 	Mimetype  string
 	Extension string
 	Size      int64
+	CreatedAt int64
+	UpdatedAt int64
 }
 
 func InsertDummyFile(db *sql.DB, p InsertDummyFileParam) error {
-	query := "INSERT INTO file (unique_id, name, path, mimetype, extension, size) VALUES ('%s', '%s', '%s', '%s', '%s', '%d')"
-	query = fmt.Sprintf(query, p.UniqueId, p.Name, p.Path, p.Mimetype, p.Extension, p.Size)
+	query := "INSERT INTO file (unique_id, name, path, mimetype, extension, size, created_at, updated_at) VALUES ('%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d')"
+	query = fmt.Sprintf(query, p.UniqueId, p.Name, p.Path, p.Mimetype, p.Extension, p.Size, p.CreatedAt, p.UpdatedAt)
 	_, err := db.Exec(query)
 	if err != nil {
 		return err
