@@ -15,7 +15,7 @@ type FileRepository struct {
 	Clock  datetime.Clock
 }
 
-func (r *FileRepository) DeleteFile(ctx context.Context, p repository.DeleteFileParam, o repository.DeleteFileOpt) (*repository.DeleteFileResult, error) {
+func (r *FileRepository) DeleteFile(ctx context.Context, p repository.DeleteFileParam) (*repository.DeleteFileResult, error) {
 	currentTimestamp := r.Clock.Now()
 
 	tx, err := r.client.BeginTx(ctx, &sql.TxOptions{
@@ -62,7 +62,7 @@ func (r *FileRepository) DeleteFile(ctx context.Context, p repository.DeleteFile
 		return nil, fmt.Errorf("record is not updated")
 	}
 
-	err = o.DeleteFn(ctx, repository.DeleteFnParam{
+	err = p.DeleteFn(ctx, repository.DeleteFnParam{
 		FilePath: file.Path,
 	})
 	if err != nil {

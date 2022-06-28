@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-seidon/local/internal/explorer"
+	"github.com/go-seidon/local/internal/filesystem"
 	"github.com/go-seidon/local/internal/logging"
 	"github.com/go-seidon/local/internal/repository"
 )
@@ -25,13 +25,13 @@ type DeleteFileResult struct {
 
 type deleter struct {
 	fileRepo    repository.FileRepository
-	fileManager explorer.FileManager
+	fileManager filesystem.FileManager
 	log         logging.Logger
 }
 
-func NewDeleteFn(fileManager explorer.FileManager) repository.DeleteFn {
+func NewDeleteFn(fileManager filesystem.FileManager) repository.DeleteFn {
 	return func(ctx context.Context, r repository.DeleteFnParam) error {
-		exists, err := fileManager.IsFileExists(ctx, explorer.IsFileExistsParam{
+		exists, err := fileManager.IsFileExists(ctx, filesystem.IsFileExistsParam{
 			Path: r.FilePath,
 		})
 		if err != nil {
@@ -42,7 +42,7 @@ func NewDeleteFn(fileManager explorer.FileManager) repository.DeleteFn {
 			return ErrorResourceNotFound
 		}
 
-		_, err = fileManager.RemoveFile(ctx, explorer.RemoveFileParam{
+		_, err = fileManager.RemoveFile(ctx, filesystem.RemoveFileParam{
 			Path: r.FilePath,
 		})
 		if err != nil {
@@ -63,7 +63,6 @@ func (s *deleter) DeleteFile(ctx context.Context, p DeleteFileParam) (*DeleteFil
 
 	delRes, err := s.fileRepo.DeleteFile(ctx, repository.DeleteFileParam{
 		UniqueId: p.FileId,
-	}, repository.DeleteFileOpt{
 		DeleteFn: NewDeleteFn(s.fileManager),
 	})
 
@@ -82,7 +81,7 @@ func (s *deleter) DeleteFile(ctx context.Context, p DeleteFileParam) (*DeleteFil
 
 type NewDeleterParam struct {
 	FileRepo    repository.FileRepository
-	FileManager explorer.FileManager
+	FileManager filesystem.FileManager
 	Logger      logging.Logger
 }
 

@@ -10,19 +10,16 @@ type (
 )
 
 type FileRepository interface {
-	DeleteFile(ctx context.Context, p DeleteFileParam, o DeleteFileOpt) (*DeleteFileResult, error)
+	DeleteFile(ctx context.Context, p DeleteFileParam) (*DeleteFileResult, error)
 }
 
 type DeleteFileParam struct {
 	UniqueId string
+	DeleteFn DeleteFn
 }
 
 type DeleteFnParam struct {
 	FilePath string
-}
-
-type DeleteFileOpt struct {
-	DeleteFn DeleteFn
 }
 
 type DeleteFileResult struct {
