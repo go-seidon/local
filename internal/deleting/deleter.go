@@ -63,7 +63,6 @@ func (s *deleter) DeleteFile(ctx context.Context, p DeleteFileParam) (*DeleteFil
 
 	delRes, err := s.fileRepo.DeleteFile(ctx, repository.DeleteFileParam{
 		UniqueId: p.FileId,
-	}, repository.DeleteFileOpt{
 		DeleteFn: NewDeleteFn(s.fileManager),
 	})
 

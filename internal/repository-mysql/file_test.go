@@ -53,7 +53,6 @@ var _ = Describe("File Repository", func() {
 			dbClient         sqlmock.Sqlmock
 			repo             *repository_mysql.FileRepository
 			p                repository.DeleteFileParam
-			o                repository.DeleteFileOpt
 			findFileQuery    string
 			deleteFileQuery  string
 			fileRows         *sqlmock.Rows
@@ -79,8 +78,6 @@ var _ = Describe("File Repository", func() {
 
 			p = repository.DeleteFileParam{
 				UniqueId: "mock-unique-id",
-			}
-			o = repository.DeleteFileOpt{
 				DeleteFn: func(ctx context.Context, p repository.DeleteFnParam) error {
 					return nil
 				},
@@ -121,7 +118,7 @@ var _ = Describe("File Repository", func() {
 					ExpectBegin().
 					WillReturnError(fmt.Errorf("failed start db trx"))
 
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("failed start db trx")))
@@ -149,7 +146,7 @@ var _ = Describe("File Repository", func() {
 				dbClient.ExpectQuery(findFileQuery).WillReturnRows(rows)
 				dbClient.ExpectRollback()
 
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err.Error()).To(Equal("sql: Scan error on column index 5, name \"size\": converting driver.Value type string (\"invalid_int_value\") to a int64: invalid syntax"))
@@ -163,7 +160,7 @@ var _ = Describe("File Repository", func() {
 					WillReturnError(sql.ErrNoRows)
 				dbClient.ExpectRollback()
 
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(repository.ErrorRecordNotFound))
@@ -177,7 +174,7 @@ var _ = Describe("File Repository", func() {
 					WillReturnError(fmt.Errorf("db error"))
 				dbClient.ExpectRollback()
 
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("db error")))
@@ -192,7 +189,7 @@ var _ = Describe("File Repository", func() {
 				dbClient.ExpectRollback().
 					WillReturnError(fmt.Errorf("failed rollback"))
 
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("failed rollback")))
@@ -206,7 +203,7 @@ var _ = Describe("File Repository", func() {
 				dbClient.ExpectExec(deleteFileQuery).WillReturnError(fmt.Errorf("db error"))
 				dbClient.ExpectRollback()
 
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("db error")))
@@ -220,7 +217,7 @@ var _ = Describe("File Repository", func() {
 				dbClient.ExpectExec(deleteFileQuery).WillReturnError(fmt.Errorf("db error"))
 				dbClient.ExpectRollback().WillReturnError(fmt.Errorf("rollback error"))
 
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("rollback error")))
@@ -234,7 +231,7 @@ var _ = Describe("File Repository", func() {
 				dbClient.ExpectExec(deleteFileQuery).WillReturnResult(driver.ResultNoRows)
 				dbClient.ExpectRollback()
 
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("record is not updated")))
@@ -248,7 +245,7 @@ var _ = Describe("File Repository", func() {
 				dbClient.ExpectExec(deleteFileQuery).WillReturnResult(driver.ResultNoRows)
 				dbClient.ExpectRollback().WillReturnError(fmt.Errorf("rollback error"))
 
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("rollback error")))
@@ -260,12 +257,12 @@ var _ = Describe("File Repository", func() {
 				dbClient.ExpectBegin()
 				dbClient.ExpectQuery(findFileQuery).WillReturnRows(fileRows)
 				dbClient.ExpectExec(deleteFileQuery).WillReturnResult(driver.RowsAffected(1))
-				o.DeleteFn = func(ctx context.Context, p repository.DeleteFnParam) error {
+				p.DeleteFn = func(ctx context.Context, p repository.DeleteFnParam) error {
 					return fmt.Errorf("delete fn error")
 				}
 				dbClient.ExpectRollback()
 
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("delete fn error")))
@@ -277,12 +274,12 @@ var _ = Describe("File Repository", func() {
 				dbClient.ExpectBegin()
 				dbClient.ExpectQuery(findFileQuery).WillReturnRows(fileRows)
 				dbClient.ExpectExec(deleteFileQuery).WillReturnResult(driver.RowsAffected(1))
-				o.DeleteFn = func(ctx context.Context, p repository.DeleteFnParam) error {
+				p.DeleteFn = func(ctx context.Context, p repository.DeleteFnParam) error {
 					return fmt.Errorf("delete fn error")
 				}
 				dbClient.ExpectRollback().WillReturnError(fmt.Errorf("rollback error"))
 
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("rollback error")))
@@ -296,7 +293,7 @@ var _ = Describe("File Repository", func() {
 				dbClient.ExpectExec(deleteFileQuery).WillReturnResult(driver.RowsAffected(1))
 				dbClient.ExpectCommit().WillReturnError(fmt.Errorf("commit error"))
 
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("commit error")))
@@ -310,7 +307,7 @@ var _ = Describe("File Repository", func() {
 				dbClient.ExpectExec(deleteFileQuery).WillReturnResult(driver.RowsAffected(1))
 				dbClient.ExpectCommit()
 
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				expectedRes := &repository.DeleteFileResult{
 					DeletedAt: currentTimestamp,
@@ -327,7 +324,6 @@ var _ = Describe("File Repository", func() {
 			client *sql.DB
 			repo   *repository_mysql.FileRepository
 			p      repository.DeleteFileParam
-			o      repository.DeleteFileOpt
 		)
 
 		BeforeAll(func() {
@@ -349,8 +345,6 @@ var _ = Describe("File Repository", func() {
 		BeforeEach(func() {
 			p = repository.DeleteFileParam{
 				UniqueId: "mock-unique-id",
-			}
-			o = repository.DeleteFileOpt{
 				DeleteFn: func(ctx context.Context, p repository.DeleteFnParam) error {
 					return nil
 				},
@@ -374,7 +368,7 @@ var _ = Describe("File Repository", func() {
 		When("file record is not available", func() {
 			It("should return error", func() {
 				p.UniqueId = "unavailable-unique-id"
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(repository.ErrorRecordNotFound))
@@ -383,10 +377,10 @@ var _ = Describe("File Repository", func() {
 
 		When("failed proceed callback", func() {
 			It("should return error", func() {
-				o.DeleteFn = func(ctx context.Context, p repository.DeleteFnParam) error {
+				p.DeleteFn = func(ctx context.Context, p repository.DeleteFnParam) error {
 					return fmt.Errorf("failed proceed callback")
 				}
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("failed proceed callback")))
@@ -395,7 +389,7 @@ var _ = Describe("File Repository", func() {
 
 		When("success delete file", func() {
 			It("should return result", func() {
-				res, err := repo.DeleteFile(ctx, p, o)
+				res, err := repo.DeleteFile(ctx, p)
 
 				Expect(res).ToNot(BeNil())
 				Expect(err).To(BeNil())

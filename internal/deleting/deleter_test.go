@@ -91,7 +91,6 @@ var _ = Describe("Deleter Service", func() {
 			fileManager *mock.MockFileManager
 			log         *mock.MockLogger
 			s           deleting.Deleter
-			deleteParam repository.DeleteFileParam
 			deleteRes   *repository.DeleteFileResult
 			finalRes    *deleting.DeleteFileResult
 		)
@@ -112,9 +111,6 @@ var _ = Describe("Deleter Service", func() {
 				FileManager: fileManager,
 				Logger:      log,
 			})
-			deleteParam = repository.DeleteFileParam{
-				UniqueId: p.FileId,
-			}
 			deleteRes = &repository.DeleteFileResult{
 				DeletedAt: currentTimestamp,
 			}
@@ -144,7 +140,7 @@ var _ = Describe("Deleter Service", func() {
 			It("should return error", func() {
 				fileRepo.
 					EXPECT().
-					DeleteFile(gomock.Eq(ctx), gomock.Eq(deleteParam), gomock.Any()).
+					DeleteFile(gomock.Eq(ctx), gomock.Any()).
 					Return(nil, fmt.Errorf("failed delete file")).
 					Times(1)
 
@@ -159,7 +155,7 @@ var _ = Describe("Deleter Service", func() {
 			It("should return error", func() {
 				fileRepo.
 					EXPECT().
-					DeleteFile(gomock.Eq(ctx), gomock.Eq(deleteParam), gomock.Any()).
+					DeleteFile(gomock.Eq(ctx), gomock.Any()).
 					Return(nil, repository.ErrorRecordNotFound).
 					Times(1)
 
@@ -174,7 +170,7 @@ var _ = Describe("Deleter Service", func() {
 			It("should return result", func() {
 				fileRepo.
 					EXPECT().
-					DeleteFile(gomock.Eq(ctx), gomock.Eq(deleteParam), gomock.Any()).
+					DeleteFile(gomock.Eq(ctx), gomock.Any()).
 					Return(deleteRes, nil).
 					Times(1)
 
