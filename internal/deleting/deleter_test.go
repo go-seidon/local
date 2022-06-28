@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/go-seidon/local/internal/deleting"
-	"github.com/go-seidon/local/internal/explorer"
+	"github.com/go-seidon/local/internal/filesystem"
 	"github.com/go-seidon/local/internal/mock"
 	"github.com/go-seidon/local/internal/repository"
 	"github.com/golang/mock/gomock"
@@ -192,9 +192,9 @@ var _ = Describe("Deleter Service", func() {
 			fileManager       *mock.MockFileManager
 			fn                repository.DeleteFn
 			deleteFnParam     repository.DeleteFnParam
-			isFileExistsParam explorer.IsFileExistsParam
-			removeParam       explorer.RemoveFileParam
-			removeRes         *explorer.RemoveFileResult
+			isFileExistsParam filesystem.IsFileExistsParam
+			removeParam       filesystem.RemoveFileParam
+			removeRes         *filesystem.RemoveFileResult
 		)
 
 		BeforeEach(func() {
@@ -207,13 +207,13 @@ var _ = Describe("Deleter Service", func() {
 			deleteFnParam = repository.DeleteFnParam{
 				FilePath: "mock/path",
 			}
-			isFileExistsParam = explorer.IsFileExistsParam{
+			isFileExistsParam = filesystem.IsFileExistsParam{
 				Path: deleteFnParam.FilePath,
 			}
-			removeParam = explorer.RemoveFileParam{
+			removeParam = filesystem.RemoveFileParam{
 				Path: deleteFnParam.FilePath,
 			}
-			removeRes = &explorer.RemoveFileResult{
+			removeRes = &filesystem.RemoveFileResult{
 				RemovedAt: currentTimestamp,
 			}
 		})
