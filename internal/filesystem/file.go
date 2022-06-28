@@ -1,11 +1,8 @@
 package filesystem
 
 import (
-	"bufio"
 	"context"
 	"errors"
-	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"time"
@@ -18,10 +15,8 @@ var (
 type FileManager interface {
 	IsFileExists(ctx context.Context, p IsFileExistsParam) (bool, error)
 	OpenFile(ctx context.Context, p OpenFileParam) (*OpenFileResult, error)
-	RemoveFile(ctx context.Context, p RemoveFileParam) (*RemoveFileResult, error)
-	CreateDir(ctx context.Context, p CreateDirParam) (*CreateDirResult, error)
 	SaveFile(ctx context.Context, p SaveFileParam) (*SaveFileResult, error)
-	ReadFile(ctx context.Context, p ReadFileParam) (*ReadFileResult, error)
+	RemoveFile(ctx context.Context, p RemoveFileParam) (*RemoveFileResult, error)
 }
 
 type IsFileExistsParam struct {
@@ -36,23 +31,6 @@ type OpenFileResult struct {
 	File *os.File
 }
 
-type RemoveFileParam struct {
-	Path string
-}
-
-type RemoveFileResult struct {
-	RemovedAt time.Time
-}
-
-type CreateDirParam struct {
-	Path       string
-	Permission fs.FileMode
-}
-
-type CreateDirResult struct {
-	CreatedAt time.Time
-}
-
 type SaveFileParam struct {
 	Name       string
 	Data       []byte
@@ -63,13 +41,12 @@ type SaveFileResult struct {
 	SavedAt time.Time
 }
 
-type ReadFileParam struct {
-	File *os.File
+type RemoveFileParam struct {
+	Path string
 }
 
-type ReadFileResult struct {
-	Data   []byte
-	ReadAt time.Time
+type RemoveFileResult struct {
+	RemovedAt time.Time
 }
 
 type fileManager struct {
@@ -101,36 +78,7 @@ func (fm *fileManager) OpenFile(ctx context.Context, p OpenFileParam) (*OpenFile
 	return res, nil
 }
 
-func (fm *fileManager) RemoveFile(ctx context.Context, p RemoveFileParam) (*RemoveFileResult, error) {
-	err := os.Remove(p.Path)
-	if err != nil {
-		notExists := errors.Is(err, os.ErrNotExist)
-		if notExists {
-			return nil, ErrorFileNotFound
-		}
-		return nil, err
-	}
-
-	currentTimestamp := time.Now()
-	res := &RemoveFileResult{
-		RemovedAt: currentTimestamp,
-	}
-	return res, nil
-}
-
-func (fm *fileManager) CreateDir(ctx context.Context, p CreateDirParam) (*CreateDirResult, error) {
-	err := os.MkdirAll(p.Path, p.Permission)
-	if err != nil {
-		return nil, err
-	}
-
-	currentTimestamp := time.Now()
-	res := &CreateDirResult{
-		CreatedAt: currentTimestamp,
-	}
-	return res, nil
-}
-
+// @note: save file/overwrite if exists
 func (fm *fileManager) SaveFile(ctx context.Context, p SaveFileParam) (*SaveFileResult, error) {
 	err := os.WriteFile(p.Name, p.Data, p.Permission)
 	if err != nil {
@@ -144,26 +92,23 @@ func (fm *fileManager) SaveFile(ctx context.Context, p SaveFileParam) (*SaveFile
 	return res, nil
 }
 
-func (fm *fileManager) ReadFile(ctx context.Context, p ReadFileParam) (*ReadFileResult, error) {
-	if p.File == nil {
-		return nil, fmt.Errorf("invalid file")
+func (fm *fileManager) RemoveFile(ctx context.Context, p RemoveFileParam) (*RemoveFileResult, error) {
+	err := os.Remove(p.Path)
+	if err == nil {
+		res := &RemoveFileResult{
+			RemovedAt: time.Now(),
+		}
+		return res, nil
 	}
 
-	reader := bufio.NewReader(p.File)
-	bytes, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, err
+	notExists := errors.Is(err, os.ErrNotExist)
+	if notExists {
+		return nil, ErrorFileNotFound
 	}
-
-	currentTimestamp := time.Now()
-	res := &ReadFileResult{
-		Data:   bytes,
-		ReadAt: currentTimestamp,
-	}
-	return res, nil
+	return nil, err
 }
 
-func NewFileManager() (*fileManager, error) {
+func NewFileManager() *fileManager {
 	s := &fileManager{}
-	return s, nil
+	return s
 }

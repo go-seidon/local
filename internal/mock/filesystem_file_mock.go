@@ -80,21 +80,6 @@ func (mr *MockFileManagerMockRecorder) OpenFile(ctx, p interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OpenFile", reflect.TypeOf((*MockFileManager)(nil).OpenFile), ctx, p)
 }
 
-// ReadFile mocks base method.
-func (m *MockFileManager) ReadFile(ctx context.Context, p filesystem.ReadFileParam) (*filesystem.ReadFileResult, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReadFile", ctx, p)
-	ret0, _ := ret[0].(*filesystem.ReadFileResult)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ReadFile indicates an expected call of ReadFile.
-func (mr *MockFileManagerMockRecorder) ReadFile(ctx, p interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadFile", reflect.TypeOf((*MockFileManager)(nil).ReadFile), ctx, p)
-}
-
 // RemoveFile mocks base method.
 func (m *MockFileManager) RemoveFile(ctx context.Context, p filesystem.RemoveFileParam) (*filesystem.RemoveFileResult, error) {
 	m.ctrl.T.Helper()
