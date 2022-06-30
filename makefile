@@ -60,6 +60,7 @@ generate-mock:
 	mockgen -package=mock -source internal/healthcheck/health.go -destination=internal/mock/healthcheck_health_mock.go
 	mockgen -package=mock -source internal/filesystem/file.go -destination=internal/mock/filesystem_file_mock.go
 	mockgen -package=mock -source internal/repository/file.go -destination=internal/mock/repository_file_mock.go
+	mockgen -package=mock -source internal/deleting/deleter.go -destination=internal/mock/deleting_deleter_mock.go
 
 .PHONY: run-grpc-app
 run-grpc-app:

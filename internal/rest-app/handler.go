@@ -154,7 +154,11 @@ func NewDeleteFileHandler(log logging.Logger, serializer serialization.Serialize
 				Message: "success delete file",
 			})
 
+			res, _ = serializer.Encode(b)
 			w.WriteHeader(http.StatusOK)
+			w.Write(res)
+
+			return
 		}
 
 		if errors.Is(err, deleting.ErrorResourceNotFound) {
@@ -174,7 +178,6 @@ func NewDeleteFileHandler(log logging.Logger, serializer serialization.Serialize
 		}
 
 		res, _ = serializer.Encode(b)
-
 		w.Write(res)
 	}
 }
