@@ -1,8 +1,6 @@
 package logging_test
 
 import (
-	"fmt"
-
 	"github.com/go-seidon/local/internal/logging"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -11,29 +9,20 @@ import (
 var _ = Describe("Logrus Package", func() {
 
 	Context("NewLogrusLog function", Label("unit"), func() {
-		var (
-			opt *logging.NewLogrusLogOption
-		)
-
 		When("option is not specified", func() {
-			It("should return error", func() {
-				res, err := logging.NewLogrusLog(opt)
+			It("should return result", func() {
+				res := logging.NewLogrusLog()
 
-				Expect(res).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("logrus option is invalid")))
+				Expect(res).ToNot(BeNil())
 			})
 		})
 
-		When("all parameter are specified", func() {
+		When("option is specified", func() {
 			It("should return result", func() {
-				opt = &logging.NewLogrusLogOption{
-					AppName:    "mock-name",
-					AppVersion: "mock-version",
-				}
-				res, err := logging.NewLogrusLog(opt)
+				opt := logging.WithAppContext("mock-name", "mock-version")
+				res := logging.NewLogrusLog(opt)
 
 				Expect(res).ToNot(BeNil())
-				Expect(err).To(BeNil())
 			})
 		})
 	})
@@ -44,10 +33,7 @@ var _ = Describe("Logrus Package", func() {
 		)
 
 		BeforeEach(func() {
-			logger, _ = logging.NewLogrusLog(&logging.NewLogrusLogOption{
-				AppName:    "mock-name",
-				AppVersion: "mock-version",
-			})
+			logger = logging.NewLogrusLog()
 		})
 
 		When("success send log", func() {
@@ -65,10 +51,7 @@ var _ = Describe("Logrus Package", func() {
 		)
 
 		BeforeEach(func() {
-			logger, _ = logging.NewLogrusLog(&logging.NewLogrusLogOption{
-				AppName:    "mock-name",
-				AppVersion: "mock-version",
-			})
+			logger = logging.NewLogrusLog()
 		})
 
 		When("success send log", func() {
@@ -86,10 +69,7 @@ var _ = Describe("Logrus Package", func() {
 		)
 
 		BeforeEach(func() {
-			logger, _ = logging.NewLogrusLog(&logging.NewLogrusLogOption{
-				AppName:    "mock-name",
-				AppVersion: "mock-version",
-			})
+			logger = logging.NewLogrusLog()
 		})
 
 		When("success send log", func() {

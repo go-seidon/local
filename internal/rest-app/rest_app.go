@@ -124,14 +124,9 @@ func NewRestApp(opt *NewRestAppOption) (*restApp, error) {
 	if opt.Logger != nil {
 		logger = opt.Logger
 	} else {
-		log, err := logging.NewLogrusLog(&logging.NewLogrusLogOption{
-			AppName:    opt.Config.AppName,
-			AppVersion: opt.Config.AppVersion,
-		})
-		if err != nil {
-			return nil, err
-		}
-		logger = log
+		logger = logging.NewLogrusLog(
+			logging.WithAppContext(opt.Config.AppName, opt.Config.AppVersion),
+		)
 	}
 
 	serializer := serialization.NewJsonSerializer()

@@ -24,7 +24,7 @@ var _ = Describe("Response Package", func() {
 		)
 
 		BeforeEach(func() {
-			log, _ := logging.NewLogrusLog(&logging.NewLogrusLogOption{})
+			log := logging.NewLogrusLog()
 			opt = &rest_app.NewRestAppOption{
 				Config: &rest_app.RestAppConfig{},
 				Logger: log,
