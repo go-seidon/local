@@ -8,7 +8,7 @@ import (
 
 var _ = Describe("Response Package", func() {
 
-	Context("NewResponseBody function", func() {
+	Context("NewResponseBody function", Label("unit"), func() {
 		var (
 			p *rest_app.NewResponseBodyParam
 		)

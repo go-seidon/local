@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-seidon/local/internal/app"
+	"github.com/go-seidon/local/internal/deleting"
+	"github.com/go-seidon/local/internal/filesystem"
 	"github.com/go-seidon/local/internal/healthcheck"
 	"github.com/go-seidon/local/internal/logging"
 	"github.com/go-seidon/local/internal/serialization"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 )
 
@@ -17,9 +21,20 @@ type restApp struct {
 	serializer serialization.Serializer
 }
 
-func (app *restApp) Run() error {
-	app.logger.Info("Running %s:%s", app.config.GetAppName(), app.config.GetAppVersion())
+func (a *restApp) Run() error {
+	a.logger.Info("Running %s:%s", a.config.GetAppName(), a.config.GetAppVersion())
 
+	router := mux.NewRouter()
+	err := a.setRouter(router)
+	if err != nil {
+		return err
+	}
+
+	a.logger.Info("Listening in: %s", a.config.GetAddress())
+	return http.ListenAndServe(a.config.GetAddress(), router)
+}
+
+func (a *restApp) setRouter(router *mux.Router) error {
 	healthJobs, err := healthcheck.NewHealthJobs()
 	if err != nil {
 		return err
@@ -35,16 +50,41 @@ func (app *restApp) Run() error {
 		return err
 	}
 
-	router := mux.NewRouter()
+	fileManager := filesystem.NewFileManager()
+
+	var repoOpt app.RepositoryOption
+	if a.config.DbProvider == app.DB_PROVIDER_MYSQL {
+		repoOpt = app.WithMySQLRepository("admin", "123456", "goseidon_local", "localhost", 3308)
+	} else {
+		return fmt.Errorf("unsupported db provider")
+	}
+
+	repo, err := app.NewRepository(repoOpt)
+	if err != nil {
+		return err
+	}
+
+	deleteService, err := deleting.NewDeleter(deleting.NewDeleterParam{
+		FileRepo:    repo.FileRepo,
+		Logger:      a.logger,
+		FileManager: fileManager,
+	})
+	if err != nil {
+		return err
+	}
+
+	rootHandler := NewRootHandler(a.logger, a.serializer, a.config.GetAppName(), a.config.GetAppVersion())
+	healthCheckHandler := NewHealthCheckHandler(a.logger, a.serializer, healthService)
+	deleteFileHandler := NewDeleteFileHandler(a.logger, a.serializer, deleteService)
+
 	router.Use(DefaultHeaderMiddleware)
-	router.HandleFunc("/", NewRootHandler(app.logger, app.serializer, app.config.GetAppName(), app.config.GetAppVersion()))
-	router.HandleFunc("/health", NewHealthCheckHandler(app.logger, app.serializer, healthService)).Methods("GET")
-	router.NotFoundHandler = NewNotFoundHandler(app.logger, app.serializer)
-	router.MethodNotAllowedHandler = NewMethodNotAllowedHandler(app.logger, app.serializer)
+	router.HandleFunc("/", rootHandler)
+	router.HandleFunc("/health", healthCheckHandler).Methods("GET")
+	router.HandleFunc("/file/{unique_id}", deleteFileHandler).Methods("DELETE")
+	router.NotFoundHandler = NewNotFoundHandler(a.logger, a.serializer)
+	router.MethodNotAllowedHandler = NewMethodNotAllowedHandler(a.logger, a.serializer)
 
-	app.logger.Info("Listening in: %s", app.config.GetAddress())
-
-	return http.ListenAndServe(app.config.GetAddress(), router)
+	return nil
 }
 
 type RestAppConfig struct {
@@ -52,6 +92,7 @@ type RestAppConfig struct {
 	AppVersion string
 	AppHost    string
 	AppPort    int
+	DbProvider string
 }
 
 func (c *RestAppConfig) GetAppName() string {
@@ -78,15 +119,26 @@ func NewRestApp(opt *NewRestAppOption) (*restApp, error) {
 	if opt.Config == nil {
 		return nil, fmt.Errorf("invalid rest app config")
 	}
-	if opt.Logger == nil {
-		return nil, fmt.Errorf("invalid rest app logger")
+
+	var logger logging.Logger
+	if opt.Logger != nil {
+		logger = opt.Logger
+	} else {
+		log, err := logging.NewLogrusLog(&logging.NewLogrusLogOption{
+			AppName:    opt.Config.AppName,
+			AppVersion: opt.Config.AppVersion,
+		})
+		if err != nil {
+			return nil, err
+		}
+		logger = log
 	}
 
 	serializer := serialization.NewJsonSerializer()
 
 	app := &restApp{
 		config:     opt.Config,
-		logger:     opt.Logger,
+		logger:     logger,
 		serializer: serializer,
 	}
 	return app, nil

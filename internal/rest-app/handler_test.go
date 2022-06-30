@@ -14,7 +14,7 @@ import (
 
 var _ = Describe("Handler Package", func() {
 
-	Context("NotFoundHandler", func() {
+	Context("NotFoundHandler", Label("unit"), func() {
 		var (
 			handler    http.HandlerFunc
 			r          *http.Request
@@ -77,7 +77,7 @@ var _ = Describe("Handler Package", func() {
 		})
 	})
 
-	Context("MethodNowAllowedHandler", func() {
+	Context("MethodNowAllowedHandler", Label("unit"), func() {
 		var (
 			handler    http.HandlerFunc
 			r          *http.Request
@@ -140,7 +140,7 @@ var _ = Describe("Handler Package", func() {
 		})
 	})
 
-	Context("RootHandler", func() {
+	Context("RootHandler", Label("unit"), func() {
 		var (
 			handler    http.HandlerFunc
 			r          *http.Request
@@ -188,6 +188,10 @@ var _ = Describe("Handler Package", func() {
 
 				w.
 					EXPECT().
+					WriteHeader(gomock.Eq(200))
+
+				w.
+					EXPECT().
 					Write([]byte{}).
 					Times(1)
 
@@ -196,7 +200,7 @@ var _ = Describe("Handler Package", func() {
 		})
 	})
 
-	Context("HealthCheckHandler", func() {
+	Context("HealthCheckHandler", Label("unit"), func() {
 		var (
 			handler       http.HandlerFunc
 			r             *http.Request
@@ -269,14 +273,14 @@ var _ = Describe("Handler Package", func() {
 				res := &healthcheck.CheckResult{
 					Status: "WARNING",
 					Items: map[string]healthcheck.CheckResultItem{
-						"app-disk": healthcheck.CheckResultItem{
+						"app-disk": {
 							Name:      "app-disk",
 							Status:    "FAILED",
 							Error:     "Critical: disk usage too high 96.71 percent",
 							CheckedAt: currentTimestamp,
 							Metadata:  nil,
 						},
-						"internet-connection": healthcheck.CheckResultItem{
+						"internet-connection": {
 							Name:      "internet-connection",
 							Status:    "OK",
 							Error:     "",
@@ -286,14 +290,14 @@ var _ = Describe("Handler Package", func() {
 					},
 				}
 				jobs := map[string]rest_app.HealthCheckItem{
-					"app-disk": rest_app.HealthCheckItem{
+					"app-disk": {
 						Name:      "app-disk",
 						Status:    "FAILED",
 						Error:     "Critical: disk usage too high 96.71 percent",
 						CheckedAt: currentTimestamp,
 						Metadata:  nil,
 					},
-					"internet-connection": rest_app.HealthCheckItem{
+					"internet-connection": {
 						Name:      "internet-connection",
 						Status:    "OK",
 						Error:     "",
@@ -331,6 +335,10 @@ var _ = Describe("Handler Package", func() {
 					Encode(b).
 					Return([]byte{}, nil).
 					Times(1)
+
+				w.
+					EXPECT().
+					WriteHeader(gomock.Eq(200))
 
 				w.
 					EXPECT().

@@ -18,7 +18,7 @@ func TestRestApp(t *testing.T) {
 
 var _ = Describe("Response Package", func() {
 
-	Context("NewRestApp function", func() {
+	Context("NewRestApp function", Label("unit"), func() {
 		var (
 			opt *rest_app.NewRestAppOption
 		)
@@ -52,12 +52,12 @@ var _ = Describe("Response Package", func() {
 		})
 
 		When("logger is not specified", func() {
-			It("should return error", func() {
+			It("should return result", func() {
 				opt.Logger = nil
 				res, err := rest_app.NewRestApp(opt)
 
-				Expect(res).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("invalid rest app logger")))
+				Expect(res).ToNot(BeNil())
+				Expect(err).To(BeNil())
 			})
 		})
 
@@ -71,7 +71,7 @@ var _ = Describe("Response Package", func() {
 		})
 	})
 
-	Context("RestAppConfig", func() {
+	Context("RestAppConfig", Label("unit"), func() {
 		var (
 			cfg *rest_app.RestAppConfig
 		)

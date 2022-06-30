@@ -11,7 +11,7 @@ import (
 
 var _ = Describe("Middleware Package", func() {
 
-	Context("DefaultHeaderMiddleware", func() {
+	Context("DefaultHeaderMiddleware", Label("unit"), func() {
 		var (
 			r           *http.Request
 			w           *mock.MockResponseWriter
@@ -38,10 +38,6 @@ var _ = Describe("Middleware Package", func() {
 				w.EXPECT().
 					Header().
 					Return(http.Header{}).
-					Times(1)
-
-				w.EXPECT().
-					WriteHeader(http.StatusOK).
 					Times(1)
 
 				middleware.ServeHTTP(w, r)

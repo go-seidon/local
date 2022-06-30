@@ -1,12 +1,16 @@
 package rest_app
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"time"
 
+	"github.com/go-seidon/local/internal/deleting"
 	"github.com/go-seidon/local/internal/healthcheck"
 	"github.com/go-seidon/local/internal/logging"
 	"github.com/go-seidon/local/internal/serialization"
+	"github.com/gorilla/mux"
 )
 
 func NewNotFoundHandler(log logging.Logger, serializer serialization.Serializer) http.HandlerFunc {
@@ -14,15 +18,14 @@ func NewNotFoundHandler(log logging.Logger, serializer serialization.Serializer)
 		log.Debug("In function: NotFoundHandler")
 		defer log.Debug("Returning function: NotFoundHandler")
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-
 		b := NewResponseBody(&NewResponseBodyParam{
 			Code:    CODE_ERROR,
 			Message: "resource not found",
 		})
 		res, _ := serializer.Encode(b)
 
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
 		w.Write(res)
 	}
 }
@@ -32,15 +35,14 @@ func NewMethodNotAllowedHandler(log logging.Logger, serializer serialization.Ser
 		log.Debug("In function: MethodNotAllowedHandler")
 		defer log.Debug("Returning function: MethodNotAllowedHandler")
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusMethodNotAllowed)
-
 		b := NewResponseBody(&NewResponseBodyParam{
 			Code:    CODE_ERROR,
 			Message: "method is not allowed",
 		})
 		res, _ := serializer.Encode(b)
 
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		w.Write(res)
 	}
 }
@@ -63,6 +65,7 @@ func NewRootHandler(log logging.Logger, serializer serialization.Serializer, app
 		})
 		res, _ := serializer.Encode(b)
 
+		w.WriteHeader(http.StatusOK)
 		w.Write(res)
 	}
 }
@@ -115,6 +118,59 @@ func NewHealthCheckHandler(log logging.Logger, serializer serialization.Serializ
 				},
 				Message: "success check service health",
 			})
+
+			w.WriteHeader(http.StatusOK)
+		}
+
+		res, _ = serializer.Encode(b)
+
+		w.Write(res)
+	}
+}
+
+type DeleteFileResponse struct {
+	DeletedAt time.Time `json:"deleted_at"`
+}
+
+func NewDeleteFileHandler(log logging.Logger, serializer serialization.Serializer, deleter deleting.Deleter) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		log.Debug("In function: DeleteFileHandler")
+		defer log.Debug("Returning function: DeleteFileHandler")
+
+		var res []byte
+		var b ResponseBody
+
+		vars := mux.Vars(req)
+
+		ctx := context.Background()
+		r, err := deleter.DeleteFile(ctx, deleting.DeleteFileParam{
+			FileId: vars["unique_id"],
+		})
+		if err == nil {
+			b = NewResponseBody(&NewResponseBodyParam{
+				Data: &DeleteFileResponse{
+					DeletedAt: r.DeletedAt,
+				},
+				Message: "success delete file",
+			})
+
+			w.WriteHeader(http.StatusOK)
+		}
+
+		if errors.Is(err, deleting.ErrorResourceNotFound) {
+			b = NewResponseBody(&NewResponseBodyParam{
+				Code:    CODE_NOT_FOUND,
+				Message: err.Error(),
+			})
+
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			b = NewResponseBody(&NewResponseBodyParam{
+				Code:    CODE_ERROR,
+				Message: err.Error(),
+			})
+
+			w.WriteHeader(http.StatusBadRequest)
 		}
 
 		res, _ = serializer.Encode(b)
