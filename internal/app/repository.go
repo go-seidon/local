@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-seidon/local/internal/repository"
 	repository_mysql "github.com/go-seidon/local/internal/repository-mysql"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
@@ -14,35 +15,47 @@ const (
 )
 
 func NewRepository(o RepositoryOption) (*NewRepositoryResult, error) {
-	var p newFileRepositoryParam
+	if o == nil {
+		return nil, fmt.Errorf("invalid repository option")
+	}
+
+	var p NewRepositoryOption
 	o.Apply(&p)
 
 	if p.Provider == DB_PROVIDER_MYSQL {
-		dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", p.MySQLUser, p.MySQLPassword, p.MySQLHost, p.MySQLPort, p.MySQLDBName)
-		client, err := sql.Open("mysql", dsn)
-		if err != nil {
-			return nil, err
-		}
-
-		fileRepo, err := repository_mysql.NewFileRepository(client)
-		if err != nil {
-			return nil, err
-		}
-
-		r := &NewRepositoryResult{
-			FileRepo: fileRepo,
-		}
-		return r, nil
+		return newMySQLRepository(p)
 	}
 
 	return nil, fmt.Errorf("db provider is not supported")
 }
 
-type RepositoryOption interface {
-	Apply(*newFileRepositoryParam)
+func newMySQLRepository(p NewRepositoryOption) (*NewRepositoryResult, error) {
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%d)/%s?parseTime=true",
+		p.MySQLUser, p.MySQLPassword,
+		p.MySQLHost, p.MySQLPort, p.MySQLDBName,
+	)
+	client, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	fileRepo, err := repository_mysql.NewFileRepository(client)
+	if err != nil {
+		return nil, err
+	}
+
+	r := &NewRepositoryResult{
+		FileRepo: fileRepo,
+	}
+	return r, nil
 }
 
-type newFileRepositoryParam struct {
+type RepositoryOption interface {
+	Apply(*NewRepositoryOption)
+}
+
+type NewRepositoryOption struct {
 	Provider string
 
 	MySQLHost     string
@@ -64,7 +77,7 @@ type mysqlRepositoryOption struct {
 	dbName   string
 }
 
-func (o *mysqlRepositoryOption) Apply(p *newFileRepositoryParam) {
+func (o *mysqlRepositoryOption) Apply(p *NewRepositoryOption) {
 	p.MySQLHost = o.host
 	p.MySQLPort = o.port
 	p.MySQLDBName = o.dbName
@@ -73,7 +86,7 @@ func (o *mysqlRepositoryOption) Apply(p *newFileRepositoryParam) {
 	p.Provider = DB_PROVIDER_MYSQL
 }
 
-func WithMySQLRepository(username string, password string, dbName string, host string, port int) RepositoryOption {
+func WithMySQLRepository(username string, password string, dbName string, host string, port int) *mysqlRepositoryOption {
 	return &mysqlRepositoryOption{
 		username: username,
 		password: password,
