@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/go-seidon/local/internal/app"
 	"github.com/go-seidon/local/internal/logging"
 	rest_app "github.com/go-seidon/local/internal/rest-app"
 )
@@ -26,7 +27,9 @@ var _ = Describe("Response Package", func() {
 		BeforeEach(func() {
 			log := logging.NewLogrusLog()
 			opt = &rest_app.NewRestAppOption{
-				Config: &rest_app.RestAppConfig{},
+				Config: &rest_app.RestAppConfig{
+					DbProvider: app.DB_PROVIDER_MYSQL,
+				},
 				Logger: log,
 			}
 		})
@@ -109,4 +112,5 @@ var _ = Describe("Response Package", func() {
 			})
 		})
 	})
+
 })

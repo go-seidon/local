@@ -1,6 +1,7 @@
 package rest_app
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -15,66 +16,45 @@ import (
 )
 
 type restApp struct {
+	server     *http.Server
 	config     *RestAppConfig
 	logger     logging.Logger
 	serializer serialization.Serializer
+
+	healthService healthcheck.HealthCheck
+	deleteService deleting.Deleter
 }
 
 func (a *restApp) Run() error {
 	a.logger.Info("Running %s:%s", a.config.GetAppName(), a.config.GetAppVersion())
 
-	router := mux.NewRouter()
-	err := a.setRouter(router)
+	err := a.healthService.Start()
 	if err != nil {
 		return err
 	}
+
+	router := mux.NewRouter()
+	a.setRouter(router)
+
+	a.server.Handler = router
+	a.server.Addr = a.config.GetAddress()
 
 	a.logger.Info("Listening in: %s", a.config.GetAddress())
-	return http.ListenAndServe(a.config.GetAddress(), router)
+	err = a.server.ListenAndServe()
+	if err != http.ErrServerClosed {
+		return err
+	}
+	return nil
 }
 
-func (a *restApp) setRouter(router *mux.Router) error {
-	healthJobs, err := healthcheck.NewHealthJobs()
-	if err != nil {
-		return err
-	}
+func (a *restApp) Stop() error {
+	return a.server.Shutdown(context.Background())
+}
 
-	healthService, err := healthcheck.NewGoHealthCheck(healthJobs)
-	if err != nil {
-		return err
-	}
-
-	err = healthService.Start()
-	if err != nil {
-		return err
-	}
-
-	fileManager := filesystem.NewFileManager()
-
-	var repoOpt app.RepositoryOption
-	if a.config.DbProvider == app.DB_PROVIDER_MYSQL {
-		repoOpt = app.WithMySQLRepository("admin", "123456", "goseidon_local", "localhost", 3308)
-	} else {
-		return fmt.Errorf("unsupported db provider")
-	}
-
-	repo, err := app.NewRepository(repoOpt)
-	if err != nil {
-		return err
-	}
-
-	deleteService, err := deleting.NewDeleter(deleting.NewDeleterParam{
-		FileRepo:    repo.FileRepo,
-		Logger:      a.logger,
-		FileManager: fileManager,
-	})
-	if err != nil {
-		return err
-	}
-
+func (a *restApp) setRouter(router *mux.Router) {
 	rootHandler := NewRootHandler(a.logger, a.serializer, a.config.GetAppName(), a.config.GetAppVersion())
-	healthCheckHandler := NewHealthCheckHandler(a.logger, a.serializer, healthService)
-	deleteFileHandler := NewDeleteFileHandler(a.logger, a.serializer, deleteService)
+	healthCheckHandler := NewHealthCheckHandler(a.logger, a.serializer, a.healthService)
+	deleteFileHandler := NewDeleteFileHandler(a.logger, a.serializer, a.deleteService)
 
 	router.Use(DefaultHeaderMiddleware)
 	router.HandleFunc("/", rootHandler)
@@ -82,8 +62,6 @@ func (a *restApp) setRouter(router *mux.Router) error {
 	router.HandleFunc("/file/{unique_id}", deleteFileHandler).Methods("DELETE")
 	router.NotFoundHandler = NewNotFoundHandler(a.logger, a.serializer)
 	router.MethodNotAllowedHandler = NewMethodNotAllowedHandler(a.logger, a.serializer)
-
-	return nil
 }
 
 type RestAppConfig struct {
@@ -118,6 +96,9 @@ func NewRestApp(opt *NewRestAppOption) (*restApp, error) {
 	if opt.Config == nil {
 		return nil, fmt.Errorf("invalid rest app config")
 	}
+	if opt.Config.DbProvider != app.DB_PROVIDER_MYSQL {
+		return nil, fmt.Errorf("unsupported db provider")
+	}
 
 	var logger logging.Logger
 	if opt.Logger != nil {
@@ -128,12 +109,44 @@ func NewRestApp(opt *NewRestAppOption) (*restApp, error) {
 		)
 	}
 
+	healthJobs, err := healthcheck.NewHealthJobs()
+	if err != nil {
+		return nil, err
+	}
+
+	healthService, err := healthcheck.NewGoHealthCheck(healthJobs)
+	if err != nil {
+		return nil, err
+	}
+
+	var repoOpt app.RepositoryOption
+	if opt.Config.DbProvider == app.DB_PROVIDER_MYSQL {
+		repoOpt = app.WithMySQLRepository("admin", "123456", "goseidon_local", "localhost", 3308)
+	}
+	repo, err := app.NewRepository(repoOpt)
+	if err != nil {
+		return nil, err
+	}
+
+	fileManager := filesystem.NewFileManager()
+	deleteService, err := deleting.NewDeleter(deleting.NewDeleterParam{
+		FileRepo:    repo.FileRepo,
+		Logger:      logger,
+		FileManager: fileManager,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	serializer := serialization.NewJsonSerializer()
 
 	app := &restApp{
-		config:     opt.Config,
-		logger:     logger,
-		serializer: serializer,
+		server:        &http.Server{},
+		config:        opt.Config,
+		logger:        logger,
+		serializer:    serializer,
+		healthService: healthService,
+		deleteService: deleteService,
 	}
 	return app, nil
 }
