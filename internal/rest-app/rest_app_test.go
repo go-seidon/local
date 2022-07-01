@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/go-seidon/local/internal/app"
 	"github.com/go-seidon/local/internal/logging"
 	rest_app "github.com/go-seidon/local/internal/rest-app"
 )
@@ -18,15 +19,17 @@ func TestRestApp(t *testing.T) {
 
 var _ = Describe("Response Package", func() {
 
-	Context("NewRestApp function", func() {
+	Context("NewRestApp function", Label("unit"), func() {
 		var (
 			opt *rest_app.NewRestAppOption
 		)
 
 		BeforeEach(func() {
-			log, _ := logging.NewLogrusLog(&logging.NewLogrusLogOption{})
+			log := logging.NewLogrusLog()
 			opt = &rest_app.NewRestAppOption{
-				Config: &rest_app.RestAppConfig{},
+				Config: &rest_app.RestAppConfig{
+					DbProvider: app.DB_PROVIDER_MYSQL,
+				},
 				Logger: log,
 			}
 		})
@@ -52,12 +55,12 @@ var _ = Describe("Response Package", func() {
 		})
 
 		When("logger is not specified", func() {
-			It("should return error", func() {
+			It("should return result", func() {
 				opt.Logger = nil
 				res, err := rest_app.NewRestApp(opt)
 
-				Expect(res).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("invalid rest app logger")))
+				Expect(res).ToNot(BeNil())
+				Expect(err).To(BeNil())
 			})
 		})
 
@@ -71,7 +74,7 @@ var _ = Describe("Response Package", func() {
 		})
 	})
 
-	Context("RestAppConfig", func() {
+	Context("RestAppConfig", Label("unit"), func() {
 		var (
 			cfg *rest_app.RestAppConfig
 		)
@@ -109,4 +112,5 @@ var _ = Describe("Response Package", func() {
 			})
 		})
 	})
+
 })

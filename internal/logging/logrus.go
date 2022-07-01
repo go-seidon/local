@@ -1,7 +1,6 @@
 package logging
 
 import (
-	"fmt"
 	"os"
 
 	stackdriver "github.com/TV4/logrus-stackdriver-formatter"
@@ -33,26 +32,25 @@ type LogClient interface {
 	Errorf(format string, args ...interface{})
 }
 
-type NewLogrusLogOption struct {
-	AppName    string
-	AppVersion string
-}
-
-func NewLogrusLog(opt *NewLogrusLogOption) (*logrusLog, error) {
-	if opt == nil {
-		return nil, fmt.Errorf("logrus option is invalid")
+func NewLogrusLog(opts ...Option) *logrusLog {
+	option := LogOption{}
+	for _, opt := range opts {
+		opt(&option)
 	}
 
 	c := logrus.New()
 	c.SetFormatter(stackdriver.NewFormatter(
-		stackdriver.WithService(opt.AppName),
-		stackdriver.WithVersion(opt.AppVersion),
+		stackdriver.WithService(option.AppName),
+		stackdriver.WithVersion(option.AppVersion),
 	))
 	c.SetOutput(os.Stdout)
-	c.SetLevel(logrus.DebugLevel)
+
+	if option.DebuggingEnabled {
+		c.SetLevel(logrus.DebugLevel)
+	}
 
 	l := &logrusLog{
 		client: c,
 	}
-	return l, nil
+	return l
 }

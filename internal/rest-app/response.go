@@ -1,8 +1,9 @@
 package rest_app
 
 const (
-	CODE_SUCCESS = "SUCCESS"
-	CODE_ERROR   = "ERROR"
+	CODE_SUCCESS   = "SUCCESS"
+	CODE_ERROR     = "ERROR"
+	CODE_NOT_FOUND = "NOT_FOUND"
 )
 
 type ResponseBody struct {

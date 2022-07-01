@@ -5,16 +5,18 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-seidon/local/internal/deleting"
 	"github.com/go-seidon/local/internal/healthcheck"
 	"github.com/go-seidon/local/internal/mock"
 	rest_app "github.com/go-seidon/local/internal/rest-app"
 	"github.com/golang/mock/gomock"
+	"github.com/gorilla/mux"
 	. "github.com/onsi/ginkgo/v2"
 )
 
 var _ = Describe("Handler Package", func() {
 
-	Context("NotFoundHandler", func() {
+	Context("NotFoundHandler", Label("unit"), func() {
 		var (
 			handler    http.HandlerFunc
 			r          *http.Request
@@ -77,7 +79,7 @@ var _ = Describe("Handler Package", func() {
 		})
 	})
 
-	Context("MethodNowAllowedHandler", func() {
+	Context("MethodNowAllowedHandler", Label("unit"), func() {
 		var (
 			handler    http.HandlerFunc
 			r          *http.Request
@@ -140,7 +142,7 @@ var _ = Describe("Handler Package", func() {
 		})
 	})
 
-	Context("RootHandler", func() {
+	Context("RootHandler", Label("unit"), func() {
 		var (
 			handler    http.HandlerFunc
 			r          *http.Request
@@ -188,6 +190,10 @@ var _ = Describe("Handler Package", func() {
 
 				w.
 					EXPECT().
+					WriteHeader(gomock.Eq(200))
+
+				w.
+					EXPECT().
 					Write([]byte{}).
 					Times(1)
 
@@ -196,7 +202,7 @@ var _ = Describe("Handler Package", func() {
 		})
 	})
 
-	Context("HealthCheckHandler", func() {
+	Context("HealthCheckHandler", Label("unit"), func() {
 		var (
 			handler       http.HandlerFunc
 			r             *http.Request
@@ -269,14 +275,14 @@ var _ = Describe("Handler Package", func() {
 				res := &healthcheck.CheckResult{
 					Status: "WARNING",
 					Items: map[string]healthcheck.CheckResultItem{
-						"app-disk": healthcheck.CheckResultItem{
+						"app-disk": {
 							Name:      "app-disk",
 							Status:    "FAILED",
 							Error:     "Critical: disk usage too high 96.71 percent",
 							CheckedAt: currentTimestamp,
 							Metadata:  nil,
 						},
-						"internet-connection": healthcheck.CheckResultItem{
+						"internet-connection": {
 							Name:      "internet-connection",
 							Status:    "OK",
 							Error:     "",
@@ -286,14 +292,14 @@ var _ = Describe("Handler Package", func() {
 					},
 				}
 				jobs := map[string]rest_app.HealthCheckItem{
-					"app-disk": rest_app.HealthCheckItem{
+					"app-disk": {
 						Name:      "app-disk",
 						Status:    "FAILED",
 						Error:     "Critical: disk usage too high 96.71 percent",
 						CheckedAt: currentTimestamp,
 						Metadata:  nil,
 					},
-					"internet-connection": rest_app.HealthCheckItem{
+					"internet-connection": {
 						Name:      "internet-connection",
 						Status:    "OK",
 						Error:     "",
@@ -330,6 +336,176 @@ var _ = Describe("Handler Package", func() {
 					EXPECT().
 					Encode(b).
 					Return([]byte{}, nil).
+					Times(1)
+
+				w.
+					EXPECT().
+					WriteHeader(gomock.Eq(200))
+
+				w.
+					EXPECT().
+					Write([]byte{}).
+					Times(1)
+
+				handler.ServeHTTP(w, r)
+			})
+		})
+	})
+
+	Context("NewDeleteFileHandler", Label("unit"), func() {
+		var (
+			handler       http.HandlerFunc
+			r             *http.Request
+			w             *mock.MockResponseWriter
+			log           *mock.MockLogger
+			serializer    *mock.MockSerializer
+			deleteService *mock.MockDeleter
+			p             deleting.DeleteFileParam
+		)
+
+		BeforeEach(func() {
+			t := GinkgoT()
+			r = mux.SetURLVars(&http.Request{}, map[string]string{
+				"unique_id": "mock-file-id",
+			})
+			ctrl := gomock.NewController(t)
+			w = mock.NewMockResponseWriter(ctrl)
+			log = mock.NewMockLogger(ctrl)
+			serializer = mock.NewMockSerializer(ctrl)
+			deleteService = mock.NewMockDeleter(ctrl)
+			handler = rest_app.NewDeleteFileHandler(log, serializer, deleteService)
+			p = deleting.DeleteFileParam{
+				FileId: "mock-file-id",
+			}
+		})
+
+		When("failed delete file", func() {
+			It("should write response", func() {
+
+				err := fmt.Errorf("failed delete file")
+
+				b := rest_app.ResponseBody{
+					Code:    "ERROR",
+					Message: err.Error(),
+				}
+
+				log.
+					EXPECT().
+					Debug("In function: DeleteFileHandler").
+					Times(1)
+				log.
+					EXPECT().
+					Debug("Returning function: DeleteFileHandler").
+					Times(1)
+
+				deleteService.
+					EXPECT().
+					DeleteFile(gomock.Any(), gomock.Eq(p)).
+					Return(nil, err).
+					Times(1)
+
+				serializer.
+					EXPECT().
+					Encode(b).
+					Return([]byte{}, nil).
+					Times(1)
+
+				w.
+					EXPECT().
+					WriteHeader(gomock.Eq(400)).
+					Times(1)
+
+				w.
+					EXPECT().
+					Write([]byte{}).
+					Times(1)
+
+				handler.ServeHTTP(w, r)
+			})
+		})
+
+		When("file is not found", func() {
+			It("should write response", func() {
+
+				err := deleting.ErrorResourceNotFound
+
+				b := rest_app.ResponseBody{
+					Code:    "NOT_FOUND",
+					Message: err.Error(),
+				}
+
+				log.
+					EXPECT().
+					Debug("In function: DeleteFileHandler").
+					Times(1)
+				log.
+					EXPECT().
+					Debug("Returning function: DeleteFileHandler").
+					Times(1)
+
+				deleteService.
+					EXPECT().
+					DeleteFile(gomock.Any(), gomock.Eq(p)).
+					Return(nil, err).
+					Times(1)
+
+				serializer.
+					EXPECT().
+					Encode(b).
+					Return([]byte{}, nil).
+					Times(1)
+
+				w.
+					EXPECT().
+					WriteHeader(gomock.Eq(404)).
+					Times(1)
+
+				w.
+					EXPECT().
+					Write([]byte{}).
+					Times(1)
+
+				handler.ServeHTTP(w, r)
+			})
+		})
+
+		When("success delete file", func() {
+			It("should write response", func() {
+				res := &deleting.DeleteFileResult{
+					DeletedAt: time.Now(),
+				}
+				b := rest_app.ResponseBody{
+					Code:    "SUCCESS",
+					Message: "success delete file",
+					Data: &rest_app.DeleteFileResponse{
+						DeletedAt: res.DeletedAt,
+					},
+				}
+
+				log.
+					EXPECT().
+					Debug("In function: DeleteFileHandler").
+					Times(1)
+				log.
+					EXPECT().
+					Debug("Returning function: DeleteFileHandler").
+					Times(1)
+
+				deleteService.
+					EXPECT().
+					DeleteFile(gomock.Any(), gomock.Eq(p)).
+					Return(res, nil).
+					Times(1)
+
+				serializer.
+					EXPECT().
+					Encode(b).
+					Return([]byte{}, nil).
+					Times(1)
+
+				w.
+					EXPECT().
+					WriteHeader(gomock.Eq(200)).
 					Times(1)
 
 				w.
