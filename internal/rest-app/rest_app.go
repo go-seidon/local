@@ -11,7 +11,6 @@ import (
 	"github.com/go-seidon/local/internal/logging"
 	"github.com/go-seidon/local/internal/serialization"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 )
 
