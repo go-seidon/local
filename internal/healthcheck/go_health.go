@@ -90,13 +90,10 @@ func NewGoHealthCheck(jobs []*HealthJob, logger logging.Logger) (*GoHealthCheck,
 		return nil, fmt.Errorf("invalid logger specified")
 	}
 
-	hLogger, err := NewGoHealthLog(logger)
-	if err != nil {
-		return nil, err
-	}
-
 	c := health.New()
-	c.Logger = hLogger
+	c.Logger = &GoHealthLog{
+		Client: logger,
+	}
 
 	s := &GoHealthCheck{
 		Client: c,
