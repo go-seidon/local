@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/InVisionApp/go-health"
+	"github.com/go-seidon/local/internal/logging"
 )
 
 type GoHealthCheck struct {
@@ -81,12 +82,18 @@ func (s *GoHealthCheck) Check() (*CheckResult, error) {
 	return res, nil
 }
 
-func NewGoHealthCheck(jobs []*HealthJob) (*GoHealthCheck, error) {
+func NewGoHealthCheck(jobs []*HealthJob, logger logging.Logger) (*GoHealthCheck, error) {
 	if len(jobs) == 0 {
 		return nil, fmt.Errorf("invalid jobs specified")
 	}
+	if logger == nil {
+		return nil, fmt.Errorf("invalid logger specified")
+	}
 
 	c := health.New()
+	c.Logger = &GoHealthLog{
+		Client: logger,
+	}
 
 	s := &GoHealthCheck{
 		Client: c,

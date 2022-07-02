@@ -7,7 +7,7 @@
 No doc right now
 
 ## Todo
-1. Inject optional custom logger to health check
+1. Refactor healthcheck to receive optional param (jobs, logger)
 2. Separate rest app and server
 3. Refactor rest app optional parameter + rename rest_app.go -> app.go
 4. Parsing & load config from .env and system environment

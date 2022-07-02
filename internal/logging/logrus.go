@@ -8,28 +8,60 @@ import (
 )
 
 type logrusLog struct {
-	client LogClient
+	client *logrus.Logger
 }
 
-func (l *logrusLog) Info(format string, args ...interface{}) error {
+func (l *logrusLog) Info(args ...interface{}) {
+	l.client.Info(args...)
+}
+
+func (l *logrusLog) Debug(args ...interface{}) {
+	l.client.Debug(args...)
+}
+
+func (l *logrusLog) Error(args ...interface{}) {
+	l.client.Error(args...)
+}
+
+func (l *logrusLog) Warn(args ...interface{}) {
+	l.client.Warn(args...)
+}
+
+func (l *logrusLog) Infof(format string, args ...interface{}) {
 	l.client.Infof(format, args...)
-	return nil
 }
 
-func (l *logrusLog) Debug(format string, args ...interface{}) error {
+func (l *logrusLog) Debugf(format string, args ...interface{}) {
 	l.client.Debugf(format, args...)
-	return nil
 }
 
-func (l *logrusLog) Error(format string, args ...interface{}) error {
+func (l *logrusLog) Errorf(format string, args ...interface{}) {
 	l.client.Errorf(format, args...)
-	return nil
 }
 
-type LogClient interface {
-	Infof(format string, args ...interface{})
-	Debugf(format string, args ...interface{})
-	Errorf(format string, args ...interface{})
+func (l *logrusLog) Warnf(format string, args ...interface{}) {
+	l.client.Warnf(format, args...)
+}
+
+func (l *logrusLog) Infoln(args ...interface{}) {
+	l.client.Infoln(args...)
+}
+
+func (l *logrusLog) Debugln(args ...interface{}) {
+	l.client.Debugln(args...)
+}
+
+func (l *logrusLog) Errorln(args ...interface{}) {
+	l.client.Errorln(args...)
+}
+
+func (l *logrusLog) Warnln(args ...interface{}) {
+	l.client.Warnln(args...)
+}
+
+func (l *logrusLog) WithFields(fs map[string]interface{}) Logger {
+	l.client = l.client.WithFields(fs).Logger
+	return l
 }
 
 func NewLogrusLog(opts ...Option) *logrusLog {
