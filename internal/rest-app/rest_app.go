@@ -26,7 +26,7 @@ type restApp struct {
 }
 
 func (a *restApp) Run() error {
-	a.logger.Info("Running %s:%s", a.config.GetAppName(), a.config.GetAppVersion())
+	a.logger.Infof("Running %s:%s", a.config.GetAppName(), a.config.GetAppVersion())
 
 	err := a.healthService.Start()
 	if err != nil {
@@ -39,7 +39,7 @@ func (a *restApp) Run() error {
 	a.server.Handler = router
 	a.server.Addr = a.config.GetAddress()
 
-	a.logger.Info("Listening in: %s", a.config.GetAddress())
+	a.logger.Infof("Listening in: %s", a.config.GetAddress())
 	err = a.server.ListenAndServe()
 	if err != http.ErrServerClosed {
 		return err
