@@ -15,9 +15,27 @@ import (
 var _ = Describe("Go Health Check", func() {
 
 	Context("NewGoHealthCheck function", Label("unit"), func() {
+		var (
+			jobs   []*healthcheck.HealthJob
+			logger *mock.MockLogger
+		)
+
+		BeforeEach(func() {
+			t := GinkgoT()
+			ctrl := gomock.NewController(t)
+			logger = mock.NewMockLogger(ctrl)
+			jobs = []*healthcheck.HealthJob{
+				{
+					Name:     "mock-job",
+					Checker:  nil,
+					Interval: 1,
+				},
+			}
+		})
+
 		When("jobs are not specified", func() {
 			It("should return error", func() {
-				r, err := healthcheck.NewGoHealthCheck(nil)
+				r, err := healthcheck.NewGoHealthCheck(nil, logger)
 
 				Expect(r).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("invalid jobs specified")))
@@ -27,23 +45,25 @@ var _ = Describe("Go Health Check", func() {
 		When("jobs are empty", func() {
 			It("should return error", func() {
 				jobs := []*healthcheck.HealthJob{}
-				r, err := healthcheck.NewGoHealthCheck(jobs)
+				r, err := healthcheck.NewGoHealthCheck(jobs, logger)
 
 				Expect(r).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("invalid jobs specified")))
 			})
 		})
 
-		When("jobs are specified", func() {
+		When("logger is not specified", func() {
+			It("should return error", func() {
+				r, err := healthcheck.NewGoHealthCheck(jobs, nil)
+
+				Expect(r).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("invalid logger specified")))
+			})
+		})
+
+		When("all params are specified", func() {
 			It("should return result", func() {
-				jobs := []*healthcheck.HealthJob{
-					{
-						Name:     "mock-job",
-						Checker:  nil,
-						Interval: 1,
-					},
-				}
-				r, err := healthcheck.NewGoHealthCheck(jobs)
+				r, err := healthcheck.NewGoHealthCheck(jobs, logger)
 
 				Expect(r).ToNot(BeNil())
 				Expect(err).To(BeNil())
@@ -55,6 +75,7 @@ var _ = Describe("Go Health Check", func() {
 		var (
 			client *mock.MockHealthClient
 			s      *healthcheck.GoHealthCheck
+			logger *mock.MockLogger
 		)
 
 		BeforeEach(func() {
@@ -68,7 +89,8 @@ var _ = Describe("Go Health Check", func() {
 					Interval: 1,
 				},
 			}
-			s, _ = healthcheck.NewGoHealthCheck(jobs)
+			logger = mock.NewMockLogger(ctrl)
+			s, _ = healthcheck.NewGoHealthCheck(jobs, logger)
 			s.Client = client
 		})
 
@@ -131,6 +153,7 @@ var _ = Describe("Go Health Check", func() {
 		var (
 			client *mock.MockHealthClient
 			s      *healthcheck.GoHealthCheck
+			logger *mock.MockLogger
 		)
 
 		BeforeEach(func() {
@@ -144,7 +167,8 @@ var _ = Describe("Go Health Check", func() {
 					Interval: 1,
 				},
 			}
-			s, _ = healthcheck.NewGoHealthCheck(jobs)
+			logger = mock.NewMockLogger(ctrl)
+			s, _ = healthcheck.NewGoHealthCheck(jobs, logger)
 			s.Client = client
 		})
 
@@ -182,6 +206,7 @@ var _ = Describe("Go Health Check", func() {
 			client           *mock.MockHealthClient
 			s                *healthcheck.GoHealthCheck
 			currentTimestamp time.Time
+			logger           *mock.MockLogger
 		)
 
 		BeforeEach(func() {
@@ -195,7 +220,8 @@ var _ = Describe("Go Health Check", func() {
 					Interval: 1,
 				},
 			}
-			s, _ = healthcheck.NewGoHealthCheck(jobs)
+			logger = mock.NewMockLogger(ctrl)
+			s, _ = healthcheck.NewGoHealthCheck(jobs, logger)
 			s.Client = client
 			currentTimestamp = time.Now()
 		})
