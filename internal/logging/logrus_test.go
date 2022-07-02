@@ -38,9 +38,8 @@ var _ = Describe("Logrus Package", func() {
 
 		When("success send log", func() {
 			It("should return nil", func() {
-				err := logger.Info("mock-log")
+				logger.Info("mock-log")
 
-				Expect(err).To(BeNil())
 			})
 		})
 	})
@@ -56,9 +55,8 @@ var _ = Describe("Logrus Package", func() {
 
 		When("success send log", func() {
 			It("should return nil", func() {
-				err := logger.Debug("mock-log")
+				logger.Debug("mock-log")
 
-				Expect(err).To(BeNil())
 			})
 		})
 	})
@@ -74,9 +72,25 @@ var _ = Describe("Logrus Package", func() {
 
 		When("success send log", func() {
 			It("should return nil", func() {
-				err := logger.Error("mock-log")
+				logger.Error("mock-log")
 
-				Expect(err).To(BeNil())
+			})
+		})
+	})
+
+	Context("Warn function", Label("unit"), func() {
+		var (
+			logger logging.Logger
+		)
+
+		BeforeEach(func() {
+			logger = logging.NewLogrusLog()
+		})
+
+		When("success send log", func() {
+			It("should return nil", func() {
+				logger.Warn("mock-log")
+
 			})
 		})
 	})
