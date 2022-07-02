@@ -3,6 +3,7 @@ package healthcheck_test
 import (
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/go-seidon/local/internal/healthcheck"
 	. "github.com/onsi/ginkgo/v2"
@@ -11,21 +12,33 @@ import (
 
 var _ = Describe("Health Check Job", func() {
 
-	Context("NewConnectionChecker function", Label("unit"), func() {
+	Context("NewHttpPingJob function", Label("unit"), func() {
 		var (
-			p healthcheck.NewConnectionCheckerParam
+			p healthcheck.NewHttpPingJobParam
 		)
 
 		BeforeEach(func() {
-			p = healthcheck.NewConnectionCheckerParam{
-				Url: "https://google.com",
+			p = healthcheck.NewHttpPingJobParam{
+				Name:     "internet-checker",
+				Interval: 30 * time.Second,
+				Url:      "https://google.com",
 			}
+		})
+
+		When("name is invalid", func() {
+			It("should return error", func() {
+				p.Name = " "
+				res, err := healthcheck.NewHttpPingJob(p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("invalid name")))
+			})
 		})
 
 		When("url is invalid", func() {
 			It("should return error", func() {
 				p.Url = "http:// "
-				res, err := healthcheck.NewConnectionChecker(p)
+				res, err := healthcheck.NewHttpPingJob(p)
 
 				expectedErr := &url.Error{
 					Op:  "parse",
@@ -39,7 +52,7 @@ var _ = Describe("Health Check Job", func() {
 
 		When("parameter are valid", func() {
 			It("should return result", func() {
-				res, err := healthcheck.NewConnectionChecker(p)
+				res, err := healthcheck.NewHttpPingJob(p)
 
 				Expect(res).ToNot(BeNil())
 				Expect(err).To(BeNil())
@@ -47,21 +60,33 @@ var _ = Describe("Health Check Job", func() {
 		})
 	})
 
-	Context("NewDiskUsageChecker function", Label("unit"), func() {
+	Context("NewDiskUsageJob function", Label("unit"), func() {
 		var (
-			p healthcheck.NewDiskUsageCheckerParam
+			p healthcheck.NewDiskUsageJobParam
 		)
 
 		BeforeEach(func() {
-			p = healthcheck.NewDiskUsageCheckerParam{
+			p = healthcheck.NewDiskUsageJobParam{
+				Name:      "app-disk",
+				Interval:  60 * time.Second,
 				Directory: "/usr/bin",
 			}
+		})
+
+		When("name is invalid", func() {
+			It("should return error", func() {
+				p.Name = " "
+				res, err := healthcheck.NewDiskUsageJob(p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("invalid name")))
+			})
 		})
 
 		When("directory is invalid", func() {
 			It("should return error", func() {
 				p.Directory = " "
-				res, err := healthcheck.NewDiskUsageChecker(p)
+				res, err := healthcheck.NewDiskUsageJob(p)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("invalid directory")))
@@ -70,22 +95,9 @@ var _ = Describe("Health Check Job", func() {
 
 		When("parameter are valid", func() {
 			It("should return result", func() {
-				res, err := healthcheck.NewDiskUsageChecker(p)
+				res, err := healthcheck.NewDiskUsageJob(p)
 
 				Expect(res).ToNot(BeNil())
-				Expect(err).To(BeNil())
-			})
-		})
-	})
-
-	Context("NewHealthJobs function", Label("unit"), func() {
-
-		When("parameter are valid", func() {
-			It("should return result", func() {
-				res, err := healthcheck.NewHealthJobs()
-
-				Expect(res).ToNot(BeNil())
-				Expect(len(res)).To(Equal(2))
 				Expect(err).To(BeNil())
 			})
 		})

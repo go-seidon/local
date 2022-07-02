@@ -35,7 +35,7 @@ var _ = Describe("Go Health Check", func() {
 
 		When("jobs are not specified", func() {
 			It("should return error", func() {
-				r, err := healthcheck.NewGoHealthCheck(nil, logger)
+				r, err := healthcheck.NewGoHealthCheck(healthcheck.WithJobs(nil))
 
 				Expect(r).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("invalid jobs specified")))
@@ -45,7 +45,10 @@ var _ = Describe("Go Health Check", func() {
 		When("jobs are empty", func() {
 			It("should return error", func() {
 				jobs := []*healthcheck.HealthJob{}
-				r, err := healthcheck.NewGoHealthCheck(jobs, logger)
+				r, err := healthcheck.NewGoHealthCheck(
+					healthcheck.WithJobs(jobs),
+					healthcheck.WithLogger(logger),
+				)
 
 				Expect(r).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("invalid jobs specified")))
@@ -54,7 +57,9 @@ var _ = Describe("Go Health Check", func() {
 
 		When("logger is not specified", func() {
 			It("should return error", func() {
-				r, err := healthcheck.NewGoHealthCheck(jobs, nil)
+				r, err := healthcheck.NewGoHealthCheck(
+					healthcheck.WithJobs(jobs),
+				)
 
 				Expect(r).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("invalid logger specified")))
@@ -63,7 +68,10 @@ var _ = Describe("Go Health Check", func() {
 
 		When("all params are specified", func() {
 			It("should return result", func() {
-				r, err := healthcheck.NewGoHealthCheck(jobs, logger)
+				r, err := healthcheck.NewGoHealthCheck(
+					healthcheck.WithJobs(jobs),
+					healthcheck.WithLogger(logger),
+				)
 
 				Expect(r).ToNot(BeNil())
 				Expect(err).To(BeNil())
@@ -90,7 +98,10 @@ var _ = Describe("Go Health Check", func() {
 				},
 			}
 			logger = mock.NewMockLogger(ctrl)
-			s, _ = healthcheck.NewGoHealthCheck(jobs, logger)
+			s, _ = healthcheck.NewGoHealthCheck(
+				healthcheck.WithJobs(jobs),
+				healthcheck.WithLogger(logger),
+			)
 			s.Client = client
 		})
 
@@ -168,7 +179,10 @@ var _ = Describe("Go Health Check", func() {
 				},
 			}
 			logger = mock.NewMockLogger(ctrl)
-			s, _ = healthcheck.NewGoHealthCheck(jobs, logger)
+			s, _ = healthcheck.NewGoHealthCheck(
+				healthcheck.WithJobs(jobs),
+				healthcheck.WithLogger(logger),
+			)
 			s.Client = client
 		})
 
@@ -221,7 +235,10 @@ var _ = Describe("Go Health Check", func() {
 				},
 			}
 			logger = mock.NewMockLogger(ctrl)
-			s, _ = healthcheck.NewGoHealthCheck(jobs, logger)
+			s, _ = healthcheck.NewGoHealthCheck(
+				healthcheck.WithJobs(jobs),
+				healthcheck.WithLogger(logger),
+			)
 			s.Client = client
 			currentTimestamp = time.Now()
 		})

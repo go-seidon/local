@@ -3,7 +3,6 @@ package healthcheck
 import (
 	"fmt"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -11,25 +10,23 @@ import (
 	diskchk "github.com/InVisionApp/go-health/checkers/disk"
 )
 
-type HealthJob struct {
+type NewHttpPingJobParam struct {
 	Name     string
-	Checker  Checker
 	Interval time.Duration
+	Url      string
 }
 
-type Checker interface {
-	Status() (interface{}, error)
-}
-
-type NewConnectionCheckerParam struct {
-	Url string
-}
-
-type NewDiskUsageCheckerParam struct {
+type NewDiskUsageJobParam struct {
+	Name      string
+	Interval  time.Duration
 	Directory string
 }
 
-func NewConnectionChecker(p NewConnectionCheckerParam) (Checker, error) {
+func NewHttpPingJob(p NewHttpPingJobParam) (*HealthJob, error) {
+	if strings.TrimSpace(p.Name) == "" {
+		return nil, fmt.Errorf("invalid name")
+	}
+
 	pingUrl, err := url.Parse(p.Url)
 	if err != nil {
 		return nil, err
@@ -38,10 +35,22 @@ func NewConnectionChecker(p NewConnectionCheckerParam) (Checker, error) {
 	internetConnection, err := checkers.NewHTTP(&checkers.HTTPConfig{
 		URL: pingUrl,
 	})
-	return internetConnection, err
+	if err != nil {
+		return nil, err
+	}
+
+	job := &HealthJob{
+		Name:     p.Name,
+		Checker:  internetConnection,
+		Interval: p.Interval,
+	}
+	return job, err
 }
 
-func NewDiskUsageChecker(p NewDiskUsageCheckerParam) (Checker, error) {
+func NewDiskUsageJob(p NewDiskUsageJobParam) (*HealthJob, error) {
+	if strings.TrimSpace(p.Name) == "" {
+		return nil, fmt.Errorf("invalid name")
+	}
 	if strings.TrimSpace(p.Directory) == "" {
 		return nil, fmt.Errorf("invalid directory")
 	}
@@ -51,41 +60,14 @@ func NewDiskUsageChecker(p NewDiskUsageCheckerParam) (Checker, error) {
 		WarningThreshold:  50,
 		CriticalThreshold: 20,
 	})
-	return appDiskChecker, err
-}
-
-func NewHealthJobs() ([]*HealthJob, error) {
-	inetChecker, err := NewConnectionChecker(NewConnectionCheckerParam{
-		Url: "https://google.com",
-	})
 	if err != nil {
 		return nil, err
 	}
 
-	workDir, err := os.Getwd()
-	if err != nil {
-		return nil, err
+	job := &HealthJob{
+		Name:     p.Name,
+		Checker:  appDiskChecker,
+		Interval: p.Interval,
 	}
-
-	appDiskChecker, err := NewDiskUsageChecker(NewDiskUsageCheckerParam{
-		Directory: workDir,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	jobs := []*HealthJob{
-		{
-			Name:     "internet-connection",
-			Checker:  inetChecker,
-			Interval: 30 * time.Second,
-		},
-		{
-			Name:     "app-disk",
-			Checker:  appDiskChecker,
-			Interval: 60 * time.Second,
-		},
-	}
-
-	return jobs, nil
+	return job, err
 }
