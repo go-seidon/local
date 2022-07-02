@@ -25,6 +25,16 @@ var _ = Describe("Logrus Package", func() {
 				Expect(res).ToNot(BeNil())
 			})
 		})
+
+		When("debugging is enabled", func() {
+			It("should return result", func() {
+				opt1 := logging.WithAppContext("mock-name", "mock-version")
+				opt2 := logging.EnableDebugging()
+				res := logging.NewLogrusLog(opt1, opt2)
+
+				Expect(res).ToNot(BeNil())
+			})
+		})
 	})
 
 	Context("Info function", Label("unit"), func() {
@@ -91,6 +101,160 @@ var _ = Describe("Logrus Package", func() {
 			It("should return nil", func() {
 				logger.Warn("mock-log")
 
+			})
+		})
+	})
+
+	Context("Infof function", Label("unit"), func() {
+		var (
+			logger logging.Logger
+		)
+
+		BeforeEach(func() {
+			logger = logging.NewLogrusLog()
+		})
+
+		When("success send log", func() {
+			It("should return nil", func() {
+				logger.Infof("%s", "mock-log")
+
+			})
+		})
+	})
+
+	Context("Debugf function", Label("unit"), func() {
+		var (
+			logger logging.Logger
+		)
+
+		BeforeEach(func() {
+			logger = logging.NewLogrusLog()
+		})
+
+		When("success send log", func() {
+			It("should return nil", func() {
+				logger.Debugf("%s", "mock-log")
+
+			})
+		})
+	})
+
+	Context("Errorf function", Label("unit"), func() {
+		var (
+			logger logging.Logger
+		)
+
+		BeforeEach(func() {
+			logger = logging.NewLogrusLog()
+		})
+
+		When("success send log", func() {
+			It("should return nil", func() {
+				logger.Errorf("%s", "mock-log")
+
+			})
+		})
+	})
+
+	Context("Warnf function", Label("unit"), func() {
+		var (
+			logger logging.Logger
+		)
+
+		BeforeEach(func() {
+			logger = logging.NewLogrusLog()
+		})
+
+		When("success send log", func() {
+			It("should return nil", func() {
+				logger.Warnf("%s", "mock-log")
+
+			})
+		})
+	})
+
+	Context("Infoln function", Label("unit"), func() {
+		var (
+			logger logging.Logger
+		)
+
+		BeforeEach(func() {
+			logger = logging.NewLogrusLog()
+		})
+
+		When("success send log", func() {
+			It("should return nil", func() {
+				logger.Infoln("mock-log")
+
+			})
+		})
+	})
+
+	Context("Debugln function", Label("unit"), func() {
+		var (
+			logger logging.Logger
+		)
+
+		BeforeEach(func() {
+			logger = logging.NewLogrusLog()
+		})
+
+		When("success send log", func() {
+			It("should return nil", func() {
+				logger.Debugln("mock-log")
+
+			})
+		})
+	})
+
+	Context("Errorln function", Label("unit"), func() {
+		var (
+			logger logging.Logger
+		)
+
+		BeforeEach(func() {
+			logger = logging.NewLogrusLog()
+		})
+
+		When("success send log", func() {
+			It("should return nil", func() {
+				logger.Errorln("mock-log")
+
+			})
+		})
+	})
+
+	Context("Warnln function", Label("unit"), func() {
+		var (
+			logger logging.Logger
+		)
+
+		BeforeEach(func() {
+			logger = logging.NewLogrusLog()
+		})
+
+		When("success send log", func() {
+			It("should return nil", func() {
+				logger.Warnln("mock-log")
+
+			})
+		})
+	})
+
+	Context("WithFields function", Label("unit"), func() {
+		var (
+			logger logging.Logger
+		)
+
+		BeforeEach(func() {
+			logger = logging.NewLogrusLog()
+		})
+
+		When("success send log", func() {
+			It("should return nil", func() {
+				res := logger.WithFields(map[string]interface{}{})
+
+				Expect(res).ToNot(BeNil())
 			})
 		})
 	})

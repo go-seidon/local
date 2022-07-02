@@ -60,7 +60,7 @@ func (l *logrusLog) Warnln(args ...interface{}) {
 }
 
 func (l *logrusLog) WithFields(fs map[string]interface{}) Logger {
-	l.client.WithFields(fs)
+	l.client = l.client.WithFields(fs).Logger
 	return l
 }
 

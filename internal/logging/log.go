@@ -22,10 +22,10 @@ type FormatedLog interface {
 }
 
 type LineLog interface {
-	Debugln(msg ...interface{})
 	Infoln(msg ...interface{})
-	Warnln(msg ...interface{})
+	Debugln(msg ...interface{})
 	Errorln(msg ...interface{})
+	Warnln(msg ...interface{})
 }
 
 type LogOption struct {
