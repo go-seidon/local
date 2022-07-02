@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-seidon/local/internal/app"
 	"github.com/go-seidon/local/internal/deleting"
@@ -109,12 +110,29 @@ func NewRestApp(opt *NewRestAppOption) (*restApp, error) {
 		)
 	}
 
-	healthJobs, err := healthcheck.NewHealthJobs()
+	inetPingJob, err := healthcheck.NewHttpPingJob(healthcheck.NewHttpPingJobParam{
+		Name:     "internet-connection",
+		Interval: 30 * time.Second,
+		Url:      "https://google.com",
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	healthService, err := healthcheck.NewGoHealthCheck(healthJobs, logger)
+	appDiskJob, err := healthcheck.NewDiskUsageJob(healthcheck.NewDiskUsageJobParam{
+		Name:      "app-disk",
+		Interval:  60 * time.Second,
+		Directory: "/",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	healthService, err := healthcheck.NewGoHealthCheck(
+		healthcheck.WithLogger(logger),
+		healthcheck.AddJob(inetPingJob),
+		healthcheck.AddJob(appDiskJob),
+	)
 	if err != nil {
 		return nil, err
 	}

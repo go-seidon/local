@@ -7,10 +7,9 @@
 No doc right now
 
 ## Todo
-1. Refactor healthcheck to receive optional param (jobs, logger)
+1. Refactor rest app optional parameter + rename rest_app.go -> app.go
 2. Separate rest app and server
-3. Refactor rest app optional parameter + rename rest_app.go -> app.go
-4. Parsing & load config from .env and system environment
+3. Parsing & load config from .env and system environment
 
 ## Technical Stack
 1. Transport layer
