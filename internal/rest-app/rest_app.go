@@ -114,7 +114,7 @@ func NewRestApp(opt *NewRestAppOption) (*restApp, error) {
 		return nil, err
 	}
 
-	healthService, err := healthcheck.NewGoHealthCheck(healthJobs)
+	healthService, err := healthcheck.NewGoHealthCheck(healthJobs, logger)
 	if err != nil {
 		return nil, err
 	}
