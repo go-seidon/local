@@ -7,7 +7,7 @@
 No doc right now
 
 ## Todo
-1. Change DeleteFileResult `deleted_at` to millisecond timestamp
+Nothing todo right now
 
 ## Technical Stack
 1. Transport layer
