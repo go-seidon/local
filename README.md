@@ -7,9 +7,8 @@
 No doc right now
 
 ## Todo
-1. Refactor rest app optional parameter + rename rest_app.go -> app.go
-2. Separate rest app and server
-3. Parsing & load config from .env and system environment
+1. Parsing & load config from .env and system environment
+2. Change DeleteFileResult `deleted_at` to millisecond timestamp
 
 ## Technical Stack
 1. Transport layer
