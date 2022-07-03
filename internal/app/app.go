@@ -1,9 +1,11 @@
 package app
 
 const (
+	ENV_LOCAL = "local"
+	ENV_TEST  = "test"
+
 	ENV_DEV  = "dev"
 	ENV_STG  = "stg"
-	ENV_TEST = "test"
 	ENV_PROD = "prod"
 )
 

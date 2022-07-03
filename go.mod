@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/InVisionApp/go-health v2.1.0+incompatible
-	github.com/InVisionApp/go-logger v1.0.1 // indirect
+	github.com/InVisionApp/go-logger v1.0.1
 	github.com/TV4/logrus-stackdriver-formatter v0.1.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/go-stack/stack v1.8.1 // indirect
@@ -13,10 +13,12 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.0
 	github.com/kr/pretty v0.3.0 // indirect
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.19.0
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/sirupsen/logrus v1.8.1
+	github.com/spf13/viper v1.12.0
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 )
