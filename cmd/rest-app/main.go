@@ -6,15 +6,15 @@ import (
 )
 
 func main() {
-	app, err := rest_app.NewRestApp(&rest_app.NewRestAppOption{
-		Config: &rest_app.RestAppConfig{
+	app, err := rest_app.NewRestApp(
+		rest_app.WithConfig(rest_app.RestAppConfig{
 			AppName:    "local-storage",
 			AppVersion: "1.0.0",
 			AppHost:    "localhost",
 			AppPort:    3000,
 			DbProvider: app.DB_PROVIDER_MYSQL,
-		},
-	})
+		}),
+	)
 	if err != nil {
 		panic(err)
 	}

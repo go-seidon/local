@@ -57,7 +57,9 @@ generate-mock:
 	mockgen -package=mock -source internal/datetime/clock.go -destination=internal/mock/datetime_clock_mock.go
 	mockgen -package=mock -source internal/logging/log.go -destination=internal/mock/logging_log_mock.go
 	mockgen -package=mock -source internal/serialization/serializer.go -destination=internal/mock/serialization_serializer_mock.go
+	mockgen -package=mock -source internal/app/server.go -destination=internal/mock/app_server_mock.go
 	mockgen -package=mock -source internal/healthcheck/health.go -destination=internal/mock/healthcheck_health_mock.go
+	mockgen -package=mock -source internal/healthcheck/go_health.go -destination=internal/mock/healthcheck_go_health_mock.go
 	mockgen -package=mock -source internal/filesystem/file.go -destination=internal/mock/filesystem_file_mock.go
 	mockgen -package=mock -source internal/repository/file.go -destination=internal/mock/repository_file_mock.go
 	mockgen -package=mock -source internal/deleting/deleter.go -destination=internal/mock/deleting_deleter_mock.go
