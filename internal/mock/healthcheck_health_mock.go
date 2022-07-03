@@ -7,36 +7,35 @@ package mock
 import (
 	reflect "reflect"
 
-	health "github.com/InVisionApp/go-health"
 	healthcheck "github.com/go-seidon/local/internal/healthcheck"
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockHealthService is a mock of HealthService interface.
-type MockHealthService struct {
+// MockHealthCheck is a mock of HealthCheck interface.
+type MockHealthCheck struct {
 	ctrl     *gomock.Controller
-	recorder *MockHealthServiceMockRecorder
+	recorder *MockHealthCheckMockRecorder
 }
 
-// MockHealthServiceMockRecorder is the mock recorder for MockHealthService.
-type MockHealthServiceMockRecorder struct {
-	mock *MockHealthService
+// MockHealthCheckMockRecorder is the mock recorder for MockHealthCheck.
+type MockHealthCheckMockRecorder struct {
+	mock *MockHealthCheck
 }
 
-// NewMockHealthService creates a new mock instance.
-func NewMockHealthService(ctrl *gomock.Controller) *MockHealthService {
-	mock := &MockHealthService{ctrl: ctrl}
-	mock.recorder = &MockHealthServiceMockRecorder{mock}
+// NewMockHealthCheck creates a new mock instance.
+func NewMockHealthCheck(ctrl *gomock.Controller) *MockHealthCheck {
+	mock := &MockHealthCheck{ctrl: ctrl}
+	mock.recorder = &MockHealthCheckMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockHealthService) EXPECT() *MockHealthServiceMockRecorder {
+func (m *MockHealthCheck) EXPECT() *MockHealthCheckMockRecorder {
 	return m.recorder
 }
 
 // Check mocks base method.
-func (m *MockHealthService) Check() (*healthcheck.CheckResult, error) {
+func (m *MockHealthCheck) Check() (*healthcheck.CheckResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Check")
 	ret0, _ := ret[0].(*healthcheck.CheckResult)
@@ -45,13 +44,13 @@ func (m *MockHealthService) Check() (*healthcheck.CheckResult, error) {
 }
 
 // Check indicates an expected call of Check.
-func (mr *MockHealthServiceMockRecorder) Check() *gomock.Call {
+func (mr *MockHealthCheckMockRecorder) Check() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Check", reflect.TypeOf((*MockHealthService)(nil).Check))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Check", reflect.TypeOf((*MockHealthCheck)(nil).Check))
 }
 
 // Start mocks base method.
-func (m *MockHealthService) Start() error {
+func (m *MockHealthCheck) Start() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Start")
 	ret0, _ := ret[0].(error)
@@ -59,13 +58,13 @@ func (m *MockHealthService) Start() error {
 }
 
 // Start indicates an expected call of Start.
-func (mr *MockHealthServiceMockRecorder) Start() *gomock.Call {
+func (mr *MockHealthCheckMockRecorder) Start() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockHealthService)(nil).Start))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockHealthCheck)(nil).Start))
 }
 
 // Stop mocks base method.
-func (m *MockHealthService) Stop() error {
+func (m *MockHealthCheck) Stop() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Stop")
 	ret0, _ := ret[0].(error)
@@ -73,88 +72,45 @@ func (m *MockHealthService) Stop() error {
 }
 
 // Stop indicates an expected call of Stop.
-func (mr *MockHealthServiceMockRecorder) Stop() *gomock.Call {
+func (mr *MockHealthCheckMockRecorder) Stop() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockHealthService)(nil).Stop))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockHealthCheck)(nil).Stop))
 }
 
-// MockHealthClient is a mock of HealthClient interface.
-type MockHealthClient struct {
+// MockChecker is a mock of Checker interface.
+type MockChecker struct {
 	ctrl     *gomock.Controller
-	recorder *MockHealthClientMockRecorder
+	recorder *MockCheckerMockRecorder
 }
 
-// MockHealthClientMockRecorder is the mock recorder for MockHealthClient.
-type MockHealthClientMockRecorder struct {
-	mock *MockHealthClient
+// MockCheckerMockRecorder is the mock recorder for MockChecker.
+type MockCheckerMockRecorder struct {
+	mock *MockChecker
 }
 
-// NewMockHealthClient creates a new mock instance.
-func NewMockHealthClient(ctrl *gomock.Controller) *MockHealthClient {
-	mock := &MockHealthClient{ctrl: ctrl}
-	mock.recorder = &MockHealthClientMockRecorder{mock}
+// NewMockChecker creates a new mock instance.
+func NewMockChecker(ctrl *gomock.Controller) *MockChecker {
+	mock := &MockChecker{ctrl: ctrl}
+	mock.recorder = &MockCheckerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockHealthClient) EXPECT() *MockHealthClientMockRecorder {
+func (m *MockChecker) EXPECT() *MockCheckerMockRecorder {
 	return m.recorder
 }
 
-// AddChecks mocks base method.
-func (m *MockHealthClient) AddChecks(cfgs []*health.Config) error {
+// Status mocks base method.
+func (m *MockChecker) Status() (interface{}, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddChecks", cfgs)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "Status")
+	ret0, _ := ret[0].(interface{})
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// AddChecks indicates an expected call of AddChecks.
-func (mr *MockHealthClientMockRecorder) AddChecks(cfgs interface{}) *gomock.Call {
+// Status indicates an expected call of Status.
+func (mr *MockCheckerMockRecorder) Status() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddChecks", reflect.TypeOf((*MockHealthClient)(nil).AddChecks), cfgs)
-}
-
-// Start mocks base method.
-func (m *MockHealthClient) Start() error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Start")
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Start indicates an expected call of Start.
-func (mr *MockHealthClientMockRecorder) Start() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockHealthClient)(nil).Start))
-}
-
-// State mocks base method.
-func (m *MockHealthClient) State() (map[string]health.State, bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "State")
-	ret0, _ := ret[0].(map[string]health.State)
-	ret1, _ := ret[1].(bool)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// State indicates an expected call of State.
-func (mr *MockHealthClientMockRecorder) State() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "State", reflect.TypeOf((*MockHealthClient)(nil).State))
-}
-
-// Stop mocks base method.
-func (m *MockHealthClient) Stop() error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Stop")
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Stop indicates an expected call of Stop.
-func (mr *MockHealthClientMockRecorder) Stop() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockHealthClient)(nil).Stop))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Status", reflect.TypeOf((*MockChecker)(nil).Status))
 }
