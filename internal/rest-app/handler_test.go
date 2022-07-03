@@ -478,7 +478,7 @@ var _ = Describe("Handler Package", func() {
 					Code:    "SUCCESS",
 					Message: "success delete file",
 					Data: &rest_app.DeleteFileResponse{
-						DeletedAt: res.DeletedAt,
+						DeletedAt: res.DeletedAt.UnixMilli(),
 					},
 				}
 
