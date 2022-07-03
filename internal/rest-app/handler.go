@@ -19,7 +19,7 @@ func NewNotFoundHandler(log logging.Logger, serializer serialization.Serializer)
 		defer log.Debug("Returning function: NotFoundHandler")
 
 		b := NewResponseBody(&NewResponseBodyParam{
-			Code:    CODE_ERROR,
+			Code:    CODE_NOT_FOUND,
 			Message: "resource not found",
 		})
 		res, _ := serializer.Encode(b)

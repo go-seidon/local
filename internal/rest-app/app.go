@@ -16,53 +16,33 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type restApp struct {
-	server     *http.Server
-	config     *RestAppConfig
-	logger     logging.Logger
-	serializer serialization.Serializer
+type RestApp struct {
+	Config *RestAppConfig
+	Server app.Server
+	Logger logging.Logger
 
-	healthService healthcheck.HealthCheck
-	deleteService deleting.Deleter
+	HealthService healthcheck.HealthCheck
 }
 
-func (a *restApp) Run() error {
-	a.logger.Infof("Running %s:%s", a.config.GetAppName(), a.config.GetAppVersion())
+func (a *RestApp) Run() error {
+	a.Logger.Infof("Running %s:%s", a.Config.GetAppName(), a.Config.GetAppVersion())
 
-	err := a.healthService.Start()
+	err := a.HealthService.Start()
 	if err != nil {
 		return err
 	}
 
-	router := mux.NewRouter()
-	a.setRouter(router)
-
-	a.server.Handler = router
-	a.server.Addr = a.config.GetAddress()
-
-	a.logger.Infof("Listening in: %s", a.config.GetAddress())
-	err = a.server.ListenAndServe()
+	a.Logger.Infof("Listening on: %s", a.Config.GetAddress())
+	err = a.Server.ListenAndServe()
 	if err != http.ErrServerClosed {
 		return err
 	}
 	return nil
 }
 
-func (a *restApp) Stop() error {
-	return a.server.Shutdown(context.Background())
-}
-
-func (a *restApp) setRouter(router *mux.Router) {
-	rootHandler := NewRootHandler(a.logger, a.serializer, a.config.GetAppName(), a.config.GetAppVersion())
-	healthCheckHandler := NewHealthCheckHandler(a.logger, a.serializer, a.healthService)
-	deleteFileHandler := NewDeleteFileHandler(a.logger, a.serializer, a.deleteService)
-
-	router.Use(DefaultHeaderMiddleware)
-	router.HandleFunc("/", rootHandler)
-	router.HandleFunc("/health", healthCheckHandler).Methods("GET")
-	router.HandleFunc("/file/{unique_id}", deleteFileHandler).Methods("DELETE")
-	router.NotFoundHandler = NewNotFoundHandler(a.logger, a.serializer)
-	router.MethodNotAllowedHandler = NewMethodNotAllowedHandler(a.logger, a.serializer)
+func (a *RestApp) Stop() error {
+	a.Logger.Infof("Stopping %s on: %s", a.Config.GetAppName(), a.Config.GetAddress())
+	return a.Server.Shutdown(context.Background())
 }
 
 type RestAppConfig struct {
@@ -85,28 +65,44 @@ func (c *RestAppConfig) GetAddress() string {
 	return fmt.Sprintf("%s:%d", c.AppHost, c.AppPort)
 }
 
-type NewRestAppOption struct {
+type RestAppOption struct {
 	Config *RestAppConfig
 	Logger logging.Logger
 }
 
-func NewRestApp(opt *NewRestAppOption) (*restApp, error) {
-	if opt == nil {
-		return nil, fmt.Errorf("invalid rest app option")
+type Option func(*RestAppOption)
+
+func WithConfig(c RestAppConfig) Option {
+	return func(rao *RestAppOption) {
+		rao.Config = &c
 	}
-	if opt.Config == nil {
+}
+
+func WithLogger(logger logging.Logger) Option {
+	return func(rao *RestAppOption) {
+		rao.Logger = logger
+	}
+}
+
+func NewRestApp(opts ...Option) (*RestApp, error) {
+	option := RestAppOption{}
+	for _, opt := range opts {
+		opt(&option)
+	}
+
+	if option.Config == nil {
 		return nil, fmt.Errorf("invalid rest app config")
 	}
-	if opt.Config.DbProvider != app.DB_PROVIDER_MYSQL {
+	if option.Config.DbProvider != app.DB_PROVIDER_MYSQL {
 		return nil, fmt.Errorf("unsupported db provider")
 	}
 
 	var logger logging.Logger
-	if opt.Logger != nil {
-		logger = opt.Logger
+	if option.Logger != nil {
+		logger = option.Logger
 	} else {
 		logger = logging.NewLogrusLog(
-			logging.WithAppContext(opt.Config.AppName, opt.Config.AppVersion),
+			logging.WithAppContext(option.Config.AppName, option.Config.AppVersion),
 		)
 	}
 
@@ -138,7 +134,7 @@ func NewRestApp(opt *NewRestAppOption) (*restApp, error) {
 	}
 
 	var repoOpt app.RepositoryOption
-	if opt.Config.DbProvider == app.DB_PROVIDER_MYSQL {
+	if option.Config.DbProvider == app.DB_PROVIDER_MYSQL {
 		repoOpt = app.WithMySQLRepository("admin", "123456", "goseidon_local", "localhost", 3308)
 	}
 	repo, err := app.NewRepository(repoOpt)
@@ -158,13 +154,33 @@ func NewRestApp(opt *NewRestAppOption) (*restApp, error) {
 
 	serializer := serialization.NewJsonSerializer()
 
-	app := &restApp{
-		server:        &http.Server{},
-		config:        opt.Config,
-		logger:        logger,
-		serializer:    serializer,
-		healthService: healthService,
-		deleteService: deleteService,
+	router := mux.NewRouter()
+	router.Use(DefaultHeaderMiddleware)
+	router.HandleFunc(
+		"/",
+		NewRootHandler(logger, serializer, option.Config.GetAppName(), option.Config.GetAppVersion()),
+	)
+	router.HandleFunc(
+		"/health",
+		NewHealthCheckHandler(logger, serializer, healthService),
+	).Methods("GET")
+	router.HandleFunc(
+		"/file/{unique_id}",
+		NewDeleteFileHandler(logger, serializer, deleteService),
+	).Methods("DELETE")
+	router.NotFoundHandler = NewNotFoundHandler(logger, serializer)
+	router.MethodNotAllowedHandler = NewMethodNotAllowedHandler(logger, serializer)
+
+	server := &http.Server{
+		Addr:    option.Config.GetAddress(),
+		Handler: router,
+	}
+
+	app := &RestApp{
+		Server:        server,
+		Config:        option.Config,
+		Logger:        logger,
+		HealthService: healthService,
 	}
 	return app, nil
 }

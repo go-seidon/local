@@ -39,7 +39,7 @@ var _ = Describe("Handler Package", func() {
 			It("should write response", func() {
 
 				b := rest_app.ResponseBody{
-					Code:    "ERROR",
+					Code:    "NOT_FOUND",
 					Message: "resource not found",
 				}
 
@@ -209,7 +209,7 @@ var _ = Describe("Handler Package", func() {
 			w             *mock.MockResponseWriter
 			log           *mock.MockLogger
 			serializer    *mock.MockSerializer
-			healthService *mock.MockHealthService
+			healthService *mock.MockHealthCheck
 		)
 
 		BeforeEach(func() {
@@ -219,7 +219,7 @@ var _ = Describe("Handler Package", func() {
 			w = mock.NewMockResponseWriter(ctrl)
 			log = mock.NewMockLogger(ctrl)
 			serializer = mock.NewMockSerializer(ctrl)
-			healthService = mock.NewMockHealthService(ctrl)
+			healthService = mock.NewMockHealthCheck(ctrl)
 			handler = rest_app.NewHealthCheckHandler(log, serializer, healthService)
 		})
 
