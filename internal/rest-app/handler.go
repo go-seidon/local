@@ -129,7 +129,7 @@ func NewHealthCheckHandler(log logging.Logger, serializer serialization.Serializ
 }
 
 type DeleteFileResponse struct {
-	DeletedAt time.Time `json:"deleted_at"`
+	DeletedAt int64 `json:"deleted_at"`
 }
 
 func NewDeleteFileHandler(log logging.Logger, serializer serialization.Serializer, deleter deleting.Deleter) http.HandlerFunc {
@@ -149,7 +149,7 @@ func NewDeleteFileHandler(log logging.Logger, serializer serialization.Serialize
 		if err == nil {
 			b = NewResponseBody(&NewResponseBodyParam{
 				Data: &DeleteFileResponse{
-					DeletedAt: r.DeletedAt,
+					DeletedAt: r.DeletedAt.UnixMilli(),
 				},
 				Message: "success delete file",
 			})
