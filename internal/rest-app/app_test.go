@@ -47,12 +47,8 @@ var _ = Describe("Response Package", func() {
 		When("db provider is not supported", func() {
 			It("should return result", func() {
 				res, err := rest_app.NewRestApp(
-					rest_app.WithConfig(rest_app.RestAppConfig{
-						AppName:    "mock-name",
-						AppVersion: "mock-version",
-						AppHost:    "localhost",
-						AppPort:    4949,
-						DbProvider: "invalid db provider",
+					rest_app.WithConfig(app.Config{
+						DBProvider: "invalid db provider",
 					}),
 				)
 
@@ -64,12 +60,8 @@ var _ = Describe("Response Package", func() {
 		When("logger is not specified", func() {
 			It("should return result", func() {
 				res, err := rest_app.NewRestApp(
-					rest_app.WithConfig(rest_app.RestAppConfig{
-						AppName:    "mock-name",
-						AppVersion: "mock-version",
-						AppHost:    "localhost",
-						AppPort:    4949,
-						DbProvider: app.DB_PROVIDER_MYSQL,
+					rest_app.WithConfig(app.Config{
+						DBProvider: app.DB_PROVIDER_MYSQL,
 					}),
 				)
 
@@ -82,12 +74,8 @@ var _ = Describe("Response Package", func() {
 			It("should return result", func() {
 				res, err := rest_app.NewRestApp(
 					rest_app.WithLogger(log),
-					rest_app.WithConfig(rest_app.RestAppConfig{
-						AppName:    "mock-name",
-						AppVersion: "mock-version",
-						AppHost:    "localhost",
-						AppPort:    4949,
-						DbProvider: app.DB_PROVIDER_MYSQL,
+					rest_app.WithConfig(app.Config{
+						DBProvider: app.DB_PROVIDER_MYSQL,
 					}),
 				)
 

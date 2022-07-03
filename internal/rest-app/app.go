@@ -66,13 +66,13 @@ func (c *RestAppConfig) GetAddress() string {
 }
 
 type RestAppOption struct {
-	Config *RestAppConfig
+	Config *app.Config
 	Logger logging.Logger
 }
 
 type Option func(*RestAppOption)
 
-func WithConfig(c RestAppConfig) Option {
+func WithConfig(c app.Config) Option {
 	return func(rao *RestAppOption) {
 		rao.Config = &c
 	}
@@ -93,7 +93,7 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 	if option.Config == nil {
 		return nil, fmt.Errorf("invalid rest app config")
 	}
-	if option.Config.DbProvider != app.DB_PROVIDER_MYSQL {
+	if option.Config.DBProvider != app.DB_PROVIDER_MYSQL {
 		return nil, fmt.Errorf("unsupported db provider")
 	}
 
@@ -134,8 +134,12 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 	}
 
 	var repoOpt app.RepositoryOption
-	if option.Config.DbProvider == app.DB_PROVIDER_MYSQL {
-		repoOpt = app.WithMySQLRepository("admin", "123456", "goseidon_local", "localhost", 3308)
+	if option.Config.DBProvider == app.DB_PROVIDER_MYSQL {
+		repoOpt = app.WithMySQLRepository(
+			option.Config.MySQLUser, option.Config.MySQLPassword,
+			option.Config.MySQLDBName, option.Config.MySQLHost,
+			option.Config.MySQLPort,
+		)
 	}
 	repo, err := app.NewRepository(repoOpt)
 	if err != nil {
@@ -158,7 +162,7 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 	router.Use(DefaultHeaderMiddleware)
 	router.HandleFunc(
 		"/",
-		NewRootHandler(logger, serializer, option.Config.GetAppName(), option.Config.GetAppVersion()),
+		NewRootHandler(logger, serializer, option.Config.AppName, option.Config.AppVersion),
 	)
 	router.HandleFunc(
 		"/health",
@@ -171,14 +175,22 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 	router.NotFoundHandler = NewNotFoundHandler(logger, serializer)
 	router.MethodNotAllowedHandler = NewMethodNotAllowedHandler(logger, serializer)
 
+	raCfg := &RestAppConfig{
+		AppName:    option.Config.AppName,
+		AppVersion: option.Config.AppVersion,
+		AppHost:    option.Config.RESTAppHost,
+		AppPort:    option.Config.RESTAppPort,
+		DbProvider: option.Config.DBProvider,
+	}
+
 	server := &http.Server{
-		Addr:    option.Config.GetAddress(),
+		Addr:    raCfg.GetAddress(),
 		Handler: router,
 	}
 
 	app := &RestApp{
 		Server:        server,
-		Config:        option.Config,
+		Config:        raCfg,
 		Logger:        logger,
 		HealthService: healthService,
 	}
