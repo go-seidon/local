@@ -92,6 +92,17 @@ var _ = Describe("File Manager", func() {
 					})
 
 					Expect(res).To(BeNil())
+					Expect(err).To(Equal(filesystem.ErrorFileNotFound))
+				})
+			})
+
+			When("failed open file", func() {
+				It("should return error", func() {
+					res, err := fm.OpenFile(ctx, filesystem.OpenFileParam{
+						Path: "\000",
+					})
+
+					Expect(res).To(BeNil())
 					Expect(err).ToNot(BeNil())
 				})
 			})

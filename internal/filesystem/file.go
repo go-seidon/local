@@ -8,10 +8,6 @@ import (
 	"time"
 )
 
-var (
-	ErrorFileNotFound = errors.New("file not found")
-)
-
 type FileManager interface {
 	IsFileExists(ctx context.Context, p IsFileExistsParam) (bool, error)
 	OpenFile(ctx context.Context, p OpenFileParam) (*OpenFileResult, error)
@@ -68,14 +64,18 @@ func (fm *fileManager) IsFileExists(ctx context.Context, p IsFileExistsParam) (b
 
 func (fm *fileManager) OpenFile(ctx context.Context, p OpenFileParam) (*OpenFileResult, error) {
 	file, err := os.Open(p.Path)
-	if err != nil {
-		return nil, err
+	if err == nil {
+		res := &OpenFileResult{
+			File: file,
+		}
+		return res, nil
 	}
 
-	res := &OpenFileResult{
-		File: file,
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, ErrorFileNotFound
 	}
-	return res, nil
+
+	return nil, err
 }
 
 // @note: save file/overwrite if exists
