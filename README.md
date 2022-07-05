@@ -7,7 +7,11 @@
 No doc right now
 
 ## Todo
-Nothing todo right now
+1. Allow injecting clock in repository
+2. Separate findFile query in DeleteFile and RetrieveFile
+
+## Nice to have
+1. Allow debugging using `APP_DEBUG` = true
 
 ## Technical Stack
 1. Transport layer
