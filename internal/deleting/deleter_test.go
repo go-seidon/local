@@ -22,7 +22,7 @@ func TestDeleting(t *testing.T) {
 }
 
 var _ = Describe("Deleter Service", func() {
-	Context("NewDeleter function", func() {
+	Context("NewDeleter function", Label("unit"), func() {
 		var (
 			fileRepo    *mock.MockFileRepository
 			fileManager *mock.MockFileManager
@@ -83,7 +83,7 @@ var _ = Describe("Deleter Service", func() {
 		})
 	})
 
-	Context("DeleteFile function", func() {
+	Context("DeleteFile function", Label("unit"), func() {
 		var (
 			ctx         context.Context
 			p           deleting.DeleteFileParam
@@ -182,7 +182,7 @@ var _ = Describe("Deleter Service", func() {
 		})
 	})
 
-	Context("NewDeleteFn function", func() {
+	Context("NewDeleteFn function", Label("unit"), func() {
 		var (
 			ctx               context.Context
 			fileManager       *mock.MockFileManager
