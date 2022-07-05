@@ -397,4 +397,116 @@ var _ = Describe("File Repository", func() {
 		})
 
 	})
+
+	Context("RetrieveFile function", Label("unit"), func() {
+		var (
+			ctx           context.Context
+			dbClient      sqlmock.Sqlmock
+			repo          *repository_mysql.FileRepository
+			p             repository.RetrieveFileParam
+			findFileQuery string
+			fileRows      *sqlmock.Rows
+		)
+
+		BeforeEach(func() {
+			ctx = context.Background()
+
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				AbortSuite("failed create db mock: " + err.Error())
+			}
+			dbClient = mock
+
+			repo, _ = repository_mysql.NewFileRepository(db)
+
+			p = repository.RetrieveFileParam{
+				UniqueId: "mock-unique-id",
+			}
+			fileRows = sqlmock.NewRows([]string{
+				"unique_id", "name", "path",
+				"mimetype", "extension", "size",
+				"created_at", "updated_at", "deleted_at",
+			}).AddRow(
+				"mock-unique-id",
+				"mock-name",
+				"mock-path",
+				"mock-mimetype",
+				"mock-extension",
+				0,
+				0,
+				0,
+				nil,
+			)
+		})
+
+		When("failed scan record", func() {
+			It("should return error", func() {
+				rows := sqlmock.NewRows([]string{
+					"unique_id", "name", "path",
+					"mimetype", "extension", "size",
+					"created_at", "updated_at", "deleted_at",
+				}).AddRow(
+					"mock-unique-id",
+					"mock-name",
+					"mock-path",
+					"mock-mimetype",
+					"mock-extension",
+					"invalid_int_value", //should be int64
+					0,
+					0,
+					0,
+				)
+				dbClient.ExpectQuery(findFileQuery).WillReturnRows(rows)
+
+				res, err := repo.RetrieveFile(ctx, p)
+
+				Expect(res).To(BeNil())
+				Expect(err.Error()).To(Equal("sql: Scan error on column index 5, name \"size\": converting driver.Value type string (\"invalid_int_value\") to a int64: invalid syntax"))
+			})
+		})
+
+		When("record is not found", func() {
+			It("should return error", func() {
+				dbClient.ExpectQuery(findFileQuery).
+					WillReturnError(sql.ErrNoRows)
+
+				res, err := repo.RetrieveFile(ctx, p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(repository.ErrorRecordNotFound))
+			})
+		})
+
+		When("failed find file record", func() {
+			It("should return error", func() {
+				dbClient.ExpectQuery(findFileQuery).
+					WillReturnError(fmt.Errorf("db error"))
+
+				res, err := repo.RetrieveFile(ctx, p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("db error")))
+			})
+		})
+
+		When("success find file", func() {
+			It("should return result", func() {
+				dbClient.ExpectQuery(findFileQuery).
+					WillReturnRows(fileRows)
+
+				res, err := repo.RetrieveFile(ctx, p)
+
+				eRes := &repository.RetrieveFileResult{
+					UniqueId:  "mock-unique-id",
+					Name:      "mock-name",
+					Path:      "mock-path",
+					MimeType:  "mock-mimetype",
+					Extension: "mock-extension",
+					DeletedAt: nil,
+				}
+				Expect(res).To(Equal(eRes))
+				Expect(err).To(BeNil())
+			})
+		})
+	})
 })
