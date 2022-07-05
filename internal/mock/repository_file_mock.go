@@ -49,3 +49,18 @@ func (mr *MockFileRepositoryMockRecorder) DeleteFile(ctx, p interface{}) *gomock
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockFileRepository)(nil).DeleteFile), ctx, p)
 }
+
+// RetrieveFile mocks base method.
+func (m *MockFileRepository) RetrieveFile(ctx context.Context, p repository.RetrieveFileParam) (*repository.RetrieveFileResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RetrieveFile", ctx, p)
+	ret0, _ := ret[0].(*repository.RetrieveFileResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RetrieveFile indicates an expected call of RetrieveFile.
+func (mr *MockFileRepositoryMockRecorder) RetrieveFile(ctx, p interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveFile", reflect.TypeOf((*MockFileRepository)(nil).RetrieveFile), ctx, p)
+}
