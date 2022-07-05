@@ -11,6 +11,7 @@ type (
 
 type FileRepository interface {
 	DeleteFile(ctx context.Context, p DeleteFileParam) (*DeleteFileResult, error)
+	RetrieveFile(ctx context.Context, p RetrieveFileParam) (*RetrieveFileResult, error)
 }
 
 type DeleteFileParam struct {
@@ -24,4 +25,17 @@ type DeleteFnParam struct {
 
 type DeleteFileResult struct {
 	DeletedAt time.Time
+}
+
+type RetrieveFileParam struct {
+	UniqueId string
+}
+
+type RetrieveFileResult struct {
+	UniqueId  string
+	Name      string
+	Path      string
+	MimeType  string
+	Extension string
+	DeletedAt *int64
 }

@@ -84,6 +84,24 @@ func (r *FileRepository) DeleteFile(ctx context.Context, p repository.DeleteFile
 	return res, nil
 }
 
+func (r *FileRepository) RetrieveFile(ctx context.Context, p repository.RetrieveFileParam) (*repository.RetrieveFileResult, error) {
+	file, err := r.findFile(ctx, findFileParam{
+		UniqueId: p.UniqueId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	res := &repository.RetrieveFileResult{
+		UniqueId:  file.UniqueId,
+		Name:      file.Name,
+		Path:      file.Path,
+		MimeType:  file.MimeType,
+		Extension: file.Extension,
+		DeletedAt: file.DeletedAt,
+	}
+	return res, nil
+}
+
 func (r *FileRepository) findFile(ctx context.Context, p findFileParam) (*findFileResult, error) {
 	var q Query
 	q = r.client
