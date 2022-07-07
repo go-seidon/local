@@ -7,9 +7,8 @@
 No doc right now
 
 ## Todo
-1. DeleteFile should check deleted_at field
-2. Allow injecting clock in repository
-3. Allow debugging using `APP_DEBUG` = true
+1. Allow injecting clock in repository
+2. Allow debugging using `APP_DEBUG` = true
 
 ## Nice to have
 1. Separate findFile query in DeleteFile and RetrieveFile
