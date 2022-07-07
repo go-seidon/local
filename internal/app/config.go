@@ -4,6 +4,7 @@ type Config struct {
 	AppName    string `env:"APP_NAME"`
 	AppEnv     string `env:"APP_ENV"`
 	AppVersion string `env:"APP_VERSION"`
+	AppDebug   bool   `env:"APP_DEBUG"`
 
 	RESTAppHost string `env:"REST_APP_HOST"`
 	RESTAppPort int    `env:"REST_APP_PORT"`

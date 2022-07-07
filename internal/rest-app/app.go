@@ -46,45 +46,6 @@ func (a *RestApp) Stop() error {
 	return a.Server.Shutdown(context.Background())
 }
 
-type RestAppConfig struct {
-	AppName    string
-	AppVersion string
-	AppHost    string
-	AppPort    int
-	DbProvider string
-}
-
-func (c *RestAppConfig) GetAppName() string {
-	return c.AppName
-}
-
-func (c *RestAppConfig) GetAppVersion() string {
-	return c.AppVersion
-}
-
-func (c *RestAppConfig) GetAddress() string {
-	return fmt.Sprintf("%s:%d", c.AppHost, c.AppPort)
-}
-
-type RestAppOption struct {
-	Config *app.Config
-	Logger logging.Logger
-}
-
-type Option func(*RestAppOption)
-
-func WithConfig(c app.Config) Option {
-	return func(rao *RestAppOption) {
-		rao.Config = &c
-	}
-}
-
-func WithLogger(logger logging.Logger) Option {
-	return func(rao *RestAppOption) {
-		rao.Logger = logger
-	}
-}
-
 func NewRestApp(opts ...Option) (*RestApp, error) {
 	option := RestAppOption{}
 	for _, opt := range opts {
@@ -102,9 +63,17 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 	if option.Logger != nil {
 		logger = option.Logger
 	} else {
-		logger = logging.NewLogrusLog(
-			logging.WithAppContext(option.Config.AppName, option.Config.AppVersion),
-		)
+		opts := []logging.Option{}
+
+		appOpt := logging.WithAppContext(option.Config.AppName, option.Config.AppVersion)
+		opts = append(opts, appOpt)
+
+		if option.Config.AppDebug {
+			debugOpt := logging.EnableDebugging()
+			opts = append(opts, debugOpt)
+		}
+
+		logger = logging.NewLogrusLog(opts...)
 	}
 
 	inetPingJob, err := healthcheck.NewHttpPingJob(healthcheck.NewHttpPingJobParam{
