@@ -37,5 +37,4 @@ type RetrieveFileResult struct {
 	Path      string
 	MimeType  string
 	Extension string
-	DeletedAt *int64
 }

@@ -70,7 +70,6 @@ func (s *retriever) RetrieveFile(ctx context.Context, p RetrieveFileParam) (*Ret
 		Path:      file.Path,
 		MimeType:  file.MimeType,
 		Extension: file.Extension,
-		DeletedAt: file.DeletedAt,
 	}
 
 	return res, nil

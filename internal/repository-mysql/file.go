@@ -91,13 +91,17 @@ func (r *FileRepository) RetrieveFile(ctx context.Context, p repository.Retrieve
 	if err != nil {
 		return nil, err
 	}
+
+	if file.DeletedAt != nil {
+		return nil, repository.ErrorRecordDeleted
+	}
+
 	res := &repository.RetrieveFileResult{
 		UniqueId:  file.UniqueId,
 		Name:      file.Name,
 		Path:      file.Path,
 		MimeType:  file.MimeType,
 		Extension: file.Extension,
-		DeletedAt: file.DeletedAt,
 	}
 	return res, nil
 }
