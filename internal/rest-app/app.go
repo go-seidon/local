@@ -169,7 +169,6 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 		AppVersion: option.Config.AppVersion,
 		AppHost:    option.Config.RESTAppHost,
 		AppPort:    option.Config.RESTAppPort,
-		DbProvider: option.Config.DBProvider,
 	}
 
 	var server app.Server

@@ -13,7 +13,6 @@ type RestAppConfig struct {
 	AppVersion string
 	AppHost    string
 	AppPort    int
-	DbProvider string
 }
 
 func (c *RestAppConfig) GetAppName() string {
