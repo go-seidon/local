@@ -121,7 +121,6 @@ var _ = Describe("Retriever Service", func() {
 				Path:      "mock-path",
 				MimeType:  "mock-mimetype",
 				Extension: "mock-extension",
-				DeletedAt: nil,
 			}
 			openParam = filesystem.OpenFileParam{
 				Path: retrieveRes.Path,
@@ -137,7 +136,6 @@ var _ = Describe("Retriever Service", func() {
 				Path:      retrieveRes.Path,
 				MimeType:  retrieveRes.MimeType,
 				Extension: retrieveRes.Extension,
-				DeletedAt: retrieveRes.DeletedAt,
 			}
 
 			log.EXPECT().
