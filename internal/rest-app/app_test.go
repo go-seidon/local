@@ -62,6 +62,7 @@ var _ = Describe("Response Package", func() {
 				res, err := rest_app.NewRestApp(
 					rest_app.WithConfig(app.Config{
 						DBProvider: app.DB_PROVIDER_MYSQL,
+						AppDebug:   true,
 					}),
 				)
 
