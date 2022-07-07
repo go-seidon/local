@@ -1,6 +1,7 @@
 APP_NAME = "goseidon-local"
 APP_ENV = "local"
 APP_VERSION = "1.0.0"
+APP_DEBUG = true
 
 REST_APP_HOST = "localhost"
 REST_APP_PORT = 3001
