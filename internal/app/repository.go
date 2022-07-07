@@ -40,7 +40,9 @@ func newMySQLRepository(p NewRepositoryOption) (*NewRepositoryResult, error) {
 		return nil, err
 	}
 
-	fileRepo, err := repository_mysql.NewFileRepository(client)
+	fileRepo, err := repository_mysql.NewFileRepository(
+		repository_mysql.WithDbClient(client),
+	)
 	if err != nil {
 		return nil, err
 	}
