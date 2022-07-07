@@ -11,14 +11,14 @@ import (
 )
 
 type FileRepository struct {
-	client *sql.DB
-	Clock  datetime.Clock
+	dbClient *sql.DB
+	clock    datetime.Clock
 }
 
 func (r *FileRepository) DeleteFile(ctx context.Context, p repository.DeleteFileParam) (*repository.DeleteFileResult, error) {
-	currentTimestamp := r.Clock.Now()
+	currentTimestamp := r.clock.Now()
 
-	tx, err := r.client.BeginTx(ctx, &sql.TxOptions{
+	tx, err := r.dbClient.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelRepeatableRead,
 	})
 	if err != nil {
@@ -117,7 +117,7 @@ func (r *FileRepository) RetrieveFile(ctx context.Context, p repository.Retrieve
 
 func (r *FileRepository) findFile(ctx context.Context, p findFileParam) (*findFileResult, error) {
 	var q Query
-	q = r.client
+	q = r.dbClient
 
 	if p.DbTransaction != nil {
 		q = p.DbTransaction
@@ -176,15 +176,26 @@ type findFileResult struct {
 	DeletedAt *int64
 }
 
-func NewFileRepository(client *sql.DB) (*FileRepository, error) {
-	if client == nil {
-		return nil, fmt.Errorf("invalid client specified")
+func NewFileRepository(opts ...RepoOption) (*FileRepository, error) {
+	option := RepositoryOption{}
+	for _, opt := range opts {
+		opt(&option)
 	}
 
-	clock := datetime.NewClock()
+	if option.dbClient == nil {
+		return nil, fmt.Errorf("invalid db client specified")
+	}
+
+	var clock datetime.Clock
+	if option.clock == nil {
+		clock = datetime.NewClock()
+	} else {
+		clock = option.clock
+	}
+
 	r := &FileRepository{
-		client: client,
-		Clock:  clock,
+		dbClient: option.dbClient,
+		clock:    clock,
 	}
 	return r, nil
 }

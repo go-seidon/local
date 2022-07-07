@@ -25,19 +25,30 @@ func TestRepositoryMySQL(t *testing.T) {
 
 var _ = Describe("File Repository", func() {
 	Context("NewFileRepository function", Label("unit"), func() {
-		When("client is not specified", func() {
+		When("db client is not specified", func() {
 			It("should return error", func() {
-				res, err := repository_mysql.NewFileRepository(nil)
+				res, err := repository_mysql.NewFileRepository()
 
 				Expect(res).To(BeNil())
-				Expect(err).To(Equal(fmt.Errorf("invalid client specified")))
+				Expect(err).To(Equal(fmt.Errorf("invalid db client specified")))
 			})
 		})
 
-		When("all parameter is specified", func() {
+		When("required parameter is specified", func() {
 			It("should return result", func() {
-				c := &sql.DB{}
-				res, err := repository_mysql.NewFileRepository(c)
+				opt := repository_mysql.WithDbClient(&sql.DB{})
+				res, err := repository_mysql.NewFileRepository(opt)
+
+				Expect(res).ToNot(BeNil())
+				Expect(err).To(BeNil())
+			})
+		})
+
+		When("clock is specified", func() {
+			It("should return result", func() {
+				clockOpt := repository_mysql.WithClock(&mock.MockClock{})
+				dbOpt := repository_mysql.WithDbClient(&sql.DB{})
+				res, err := repository_mysql.NewFileRepository(clockOpt, dbOpt)
 
 				Expect(res).ToNot(BeNil())
 				Expect(err).To(BeNil())
@@ -73,8 +84,9 @@ var _ = Describe("File Repository", func() {
 			}
 			dbClient = mock
 
-			repo, _ = repository_mysql.NewFileRepository(db)
-			repo.Clock = clock
+			clockOpt := repository_mysql.WithClock(clock)
+			dbOpt := repository_mysql.WithDbClient(db)
+			repo, _ = repository_mysql.NewFileRepository(clockOpt, dbOpt)
 
 			p = repository.DeleteFileParam{
 				UniqueId: "mock-unique-id",
@@ -397,7 +409,8 @@ var _ = Describe("File Repository", func() {
 			}
 
 			ctx = context.Background()
-			repo, _ = repository_mysql.NewFileRepository(client)
+			dbOpt := repository_mysql.WithDbClient(client)
+			repo, _ = repository_mysql.NewFileRepository(dbOpt)
 		})
 
 		BeforeEach(func() {
@@ -475,7 +488,8 @@ var _ = Describe("File Repository", func() {
 			}
 			dbClient = mock
 
-			repo, _ = repository_mysql.NewFileRepository(db)
+			dbOpt := repository_mysql.WithDbClient(db)
+			repo, _ = repository_mysql.NewFileRepository(dbOpt)
 
 			p = repository.RetrieveFileParam{
 				UniqueId: "mock-unique-id",
