@@ -3,12 +3,14 @@ package rest_app
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"time"
 
 	"github.com/go-seidon/local/internal/deleting"
 	"github.com/go-seidon/local/internal/healthcheck"
 	"github.com/go-seidon/local/internal/logging"
+	"github.com/go-seidon/local/internal/retrieving"
 	"github.com/go-seidon/local/internal/serialization"
 	"github.com/gorilla/mux"
 )
@@ -162,6 +164,67 @@ func NewDeleteFileHandler(log logging.Logger, serializer serialization.Serialize
 		}
 
 		if errors.Is(err, deleting.ErrorResourceNotFound) {
+			b = NewResponseBody(&NewResponseBodyParam{
+				Code:    CODE_NOT_FOUND,
+				Message: err.Error(),
+			})
+
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			b = NewResponseBody(&NewResponseBodyParam{
+				Code:    CODE_ERROR,
+				Message: err.Error(),
+			})
+
+			w.WriteHeader(http.StatusBadRequest)
+		}
+
+		res, _ = serializer.Encode(b)
+		w.Write(res)
+	}
+}
+
+func NewRetrieveFileHandler(log logging.Logger, serializer serialization.Serializer, retriever retrieving.Retriever) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		log.Debug("In function: RetrieveFileHandler")
+		defer log.Debug("Returning function: RetrieveFileHandler")
+
+		var res []byte
+		var b ResponseBody
+
+		vars := mux.Vars(req)
+
+		ctx := context.Background()
+		r, err := retriever.RetrieveFile(ctx, retrieving.RetrieveFileParam{
+			FileId: vars["unique_id"],
+		})
+		if err == nil {
+
+			defer r.Data.Close()
+			data, err := io.ReadAll(r.Data)
+			if err != nil {
+				b = NewResponseBody(&NewResponseBodyParam{
+					Code:    CODE_ERROR,
+					Message: err.Error(),
+				})
+				res, _ = serializer.Encode(b)
+
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write(res)
+				return
+			}
+
+			if r.MimeType != "" {
+				w.Header().Set("Content-Type", r.MimeType)
+			} else {
+				w.Header().Del("Content-Type")
+			}
+
+			w.Write(data)
+			return
+		}
+
+		if errors.Is(err, retrieving.ErrorResourceNotFound) {
 			b = NewResponseBody(&NewResponseBodyParam{
 				Code:    CODE_NOT_FOUND,
 				Message: err.Error(),

@@ -11,6 +11,7 @@ import (
 	"github.com/go-seidon/local/internal/filesystem"
 	"github.com/go-seidon/local/internal/healthcheck"
 	"github.com/go-seidon/local/internal/logging"
+	"github.com/go-seidon/local/internal/retrieving"
 	"github.com/go-seidon/local/internal/serialization"
 
 	"github.com/gorilla/mux"
@@ -156,6 +157,15 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 		return nil, err
 	}
 
+	retrieveService, err := retrieving.NewRetriever(retrieving.NewRetrieverParam{
+		FileRepo:    repo.FileRepo,
+		Logger:      logger,
+		FileManager: fileManager,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	serializer := serialization.NewJsonSerializer()
 
 	router := mux.NewRouter()
@@ -167,11 +177,15 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 	router.HandleFunc(
 		"/health",
 		NewHealthCheckHandler(logger, serializer, healthService),
-	).Methods("GET")
+	).Methods(http.MethodGet)
 	router.HandleFunc(
 		"/file/{unique_id}",
 		NewDeleteFileHandler(logger, serializer, deleteService),
-	).Methods("DELETE")
+	).Methods(http.MethodDelete)
+	router.HandleFunc(
+		"/file/{unique_id}",
+		NewRetrieveFileHandler(logger, serializer, retrieveService),
+	).Methods(http.MethodGet)
 	router.NotFoundHandler = NewNotFoundHandler(logger, serializer)
 	router.MethodNotAllowedHandler = NewMethodNotAllowedHandler(logger, serializer)
 
