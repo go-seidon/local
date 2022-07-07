@@ -7,11 +7,13 @@
 No doc right now
 
 ## Todo
-1. Allow injecting clock in repository
-2. Separate findFile query in DeleteFile and RetrieveFile
+1. DeleteFile should check deleted_at field
+2. Allow injecting clock in repository
+3. Allow debugging using `APP_DEBUG` = true
 
 ## Nice to have
-1. Allow debugging using `APP_DEBUG` = true
+1. Separate findFile query in DeleteFile and RetrieveFile
+2. File meta for storing file related data, e.g: user_id, feature, category, etc
 
 ## Technical Stack
 1. Transport layer
