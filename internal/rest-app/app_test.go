@@ -62,6 +62,7 @@ var _ = Describe("Response Package", func() {
 				res, err := rest_app.NewRestApp(
 					rest_app.WithConfig(app.Config{
 						DBProvider: app.DB_PROVIDER_MYSQL,
+						AppDebug:   true,
 					}),
 				)
 
@@ -138,18 +139,18 @@ var _ = Describe("Response Package", func() {
 			logger = mock.NewMockLogger(ctrl)
 			healthService = mock.NewMockHealthCheck(ctrl)
 			server = mock.NewMockServer(ctrl)
-			ra = &rest_app.RestApp{
-				Config: &rest_app.RestAppConfig{
-					AppName:    "mock-name",
-					AppVersion: "mock-version",
-					AppHost:    "localhost",
-					AppPort:    4949,
-					DbProvider: "mysql",
-				},
-				Logger:        logger,
-				Server:        server,
-				HealthService: healthService,
-			}
+			ra, _ = rest_app.NewRestApp(
+				rest_app.WithConfig(app.Config{
+					AppName:     "mock-name",
+					AppVersion:  "mock-version",
+					RESTAppHost: "localhost",
+					RESTAppPort: 4949,
+					DBProvider:  "mysql",
+				}),
+				rest_app.WithLogger(logger),
+				rest_app.WithServer(server),
+				rest_app.WithService(healthService),
+			)
 		})
 
 		When("failed start healthcehck", func() {
@@ -247,18 +248,18 @@ var _ = Describe("Response Package", func() {
 			logger = mock.NewMockLogger(ctrl)
 			healthService = mock.NewMockHealthCheck(ctrl)
 			server = mock.NewMockServer(ctrl)
-			ra = &rest_app.RestApp{
-				Config: &rest_app.RestAppConfig{
-					AppName:    "mock-name",
-					AppVersion: "mock-version",
-					AppHost:    "localhost",
-					AppPort:    4949,
-					DbProvider: "mysql",
-				},
-				Logger:        logger,
-				Server:        server,
-				HealthService: healthService,
-			}
+			ra, _ = rest_app.NewRestApp(
+				rest_app.WithConfig(app.Config{
+					AppName:     "mock-name",
+					AppVersion:  "mock-version",
+					RESTAppHost: "localhost",
+					RESTAppPort: 4949,
+					DBProvider:  "mysql",
+				}),
+				rest_app.WithLogger(logger),
+				rest_app.WithServer(server),
+				rest_app.WithService(healthService),
+			)
 		})
 
 		When("failed stop app", func() {

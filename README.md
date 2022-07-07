@@ -7,7 +7,7 @@
 No doc right now
 
 ## Todo
-1. Allow debugging using `APP_DEBUG` = true
+1. Upload file
 
 ## Nice to have
 1. Separate findFile query in DeleteFile and RetrieveFile
