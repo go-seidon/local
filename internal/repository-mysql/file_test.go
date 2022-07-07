@@ -489,6 +489,33 @@ var _ = Describe("File Repository", func() {
 			})
 		})
 
+		When("file is deleted", func() {
+			It("should return error", func() {
+				fileRows = sqlmock.NewRows([]string{
+					"unique_id", "name", "path",
+					"mimetype", "extension", "size",
+					"created_at", "updated_at", "deleted_at",
+				}).AddRow(
+					"mock-unique-id",
+					"mock-name",
+					"mock-path",
+					"mock-mimetype",
+					"mock-extension",
+					0,
+					0,
+					0,
+					1,
+				)
+				dbClient.ExpectQuery(findFileQuery).
+					WillReturnRows(fileRows)
+
+				res, err := repo.RetrieveFile(ctx, p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(repository.ErrorRecordDeleted))
+			})
+		})
+
 		When("success find file", func() {
 			It("should return result", func() {
 				dbClient.ExpectQuery(findFileQuery).
@@ -502,7 +529,6 @@ var _ = Describe("File Repository", func() {
 					Path:      "mock-path",
 					MimeType:  "mock-mimetype",
 					Extension: "mock-extension",
-					DeletedAt: nil,
 				}
 				Expect(res).To(Equal(eRes))
 				Expect(err).To(BeNil())
