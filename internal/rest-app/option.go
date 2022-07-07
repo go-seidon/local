@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-seidon/local/internal/app"
+	"github.com/go-seidon/local/internal/healthcheck"
 	"github.com/go-seidon/local/internal/logging"
 )
 
@@ -28,8 +29,10 @@ func (c *RestAppConfig) GetAddress() string {
 }
 
 type RestAppOption struct {
-	Config *app.Config
-	Logger logging.Logger
+	Config        *app.Config
+	Logger        logging.Logger
+	Server        app.Server
+	HealthService healthcheck.HealthCheck
 }
 
 type Option func(*RestAppOption)
@@ -43,5 +46,17 @@ func WithConfig(c app.Config) Option {
 func WithLogger(logger logging.Logger) Option {
 	return func(rao *RestAppOption) {
 		rao.Logger = logger
+	}
+}
+
+func WithServer(server app.Server) Option {
+	return func(rao *RestAppOption) {
+		rao.Server = server
+	}
+}
+
+func WithService(healthService healthcheck.HealthCheck) Option {
+	return func(rao *RestAppOption) {
+		rao.HealthService = healthService
 	}
 }

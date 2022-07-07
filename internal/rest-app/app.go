@@ -18,23 +18,23 @@ import (
 )
 
 type RestApp struct {
-	Config *RestAppConfig
-	Server app.Server
-	Logger logging.Logger
+	config *RestAppConfig
+	server app.Server
+	logger logging.Logger
 
-	HealthService healthcheck.HealthCheck
+	healthService healthcheck.HealthCheck
 }
 
 func (a *RestApp) Run() error {
-	a.Logger.Infof("Running %s:%s", a.Config.GetAppName(), a.Config.GetAppVersion())
+	a.logger.Infof("Running %s:%s", a.config.GetAppName(), a.config.GetAppVersion())
 
-	err := a.HealthService.Start()
+	err := a.healthService.Start()
 	if err != nil {
 		return err
 	}
 
-	a.Logger.Infof("Listening on: %s", a.Config.GetAddress())
-	err = a.Server.ListenAndServe()
+	a.logger.Infof("Listening on: %s", a.config.GetAddress())
+	err = a.server.ListenAndServe()
 	if err != http.ErrServerClosed {
 		return err
 	}
@@ -42,8 +42,8 @@ func (a *RestApp) Run() error {
 }
 
 func (a *RestApp) Stop() error {
-	a.Logger.Infof("Stopping %s on: %s", a.Config.GetAppName(), a.Config.GetAddress())
-	return a.Server.Shutdown(context.Background())
+	a.logger.Infof("Stopping %s on: %s", a.config.GetAppName(), a.config.GetAddress())
+	return a.server.Shutdown(context.Background())
 }
 
 func NewRestApp(opts ...Option) (*RestApp, error) {
@@ -94,13 +94,19 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 		return nil, err
 	}
 
-	healthService, err := healthcheck.NewGoHealthCheck(
-		healthcheck.WithLogger(logger),
-		healthcheck.AddJob(inetPingJob),
-		healthcheck.AddJob(appDiskJob),
-	)
-	if err != nil {
-		return nil, err
+	var healthService healthcheck.HealthCheck
+	if option.HealthService != nil {
+		healthService = option.HealthService
+	} else {
+		healthCheck, err := healthcheck.NewGoHealthCheck(
+			healthcheck.WithLogger(logger),
+			healthcheck.AddJob(inetPingJob),
+			healthcheck.AddJob(appDiskJob),
+		)
+		if err != nil {
+			return nil, err
+		}
+		healthService = healthCheck
 	}
 
 	var repoOpt app.RepositoryOption
@@ -166,16 +172,21 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 		DbProvider: option.Config.DBProvider,
 	}
 
-	server := &http.Server{
-		Addr:    raCfg.GetAddress(),
-		Handler: router,
+	var server app.Server
+	if option.Server != nil {
+		server = option.Server
+	} else {
+		server = &http.Server{
+			Addr:    raCfg.GetAddress(),
+			Handler: router,
+		}
 	}
 
 	app := &RestApp{
-		Server:        server,
-		Config:        raCfg,
-		Logger:        logger,
-		HealthService: healthService,
+		server:        server,
+		config:        raCfg,
+		logger:        logger,
+		healthService: healthService,
 	}
 	return app, nil
 }
