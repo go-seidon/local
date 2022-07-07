@@ -38,6 +38,15 @@ func (r *FileRepository) DeleteFile(ctx context.Context, p repository.DeleteFile
 		return nil, err
 	}
 
+	if file.DeletedAt != nil {
+		txErr := tx.Rollback()
+		if txErr != nil {
+			return nil, txErr
+		}
+
+		return nil, repository.ErrorRecordDeleted
+	}
+
 	sqlQuery := fmt.Sprintf(
 		"UPDATE file SET deleted_at = '%d' WHERE unique_id = '%s'",
 		currentTimestamp.UnixMilli(),
