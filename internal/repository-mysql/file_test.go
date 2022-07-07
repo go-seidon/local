@@ -108,7 +108,7 @@ var _ = Describe("File Repository", func() {
 				0,
 				0,
 				0,
-				0,
+				nil,
 			)
 		})
 
@@ -193,6 +193,64 @@ var _ = Describe("File Repository", func() {
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("failed rollback")))
+			})
+		})
+
+		When("failed rollback file is deleted", func() {
+			It("should return error", func() {
+				fileRows = sqlmock.NewRows([]string{
+					"unique_id", "name", "path",
+					"mimetype", "extension", "size",
+					"created_at", "updated_at", "deleted_at",
+				}).AddRow(
+					"mock-unique-id",
+					"mock-name",
+					"mock-path",
+					"mock-mimetype",
+					"mock-extension",
+					0,
+					0,
+					0,
+					1, //deleted
+				)
+
+				dbClient.ExpectBegin()
+				dbClient.ExpectQuery(findFileQuery).WillReturnRows(fileRows)
+				dbClient.ExpectRollback().WillReturnError(fmt.Errorf("rollback error"))
+
+				res, err := repo.DeleteFile(ctx, p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("rollback error")))
+			})
+		})
+
+		When("file is deleted", func() {
+			It("should return error", func() {
+				fileRows = sqlmock.NewRows([]string{
+					"unique_id", "name", "path",
+					"mimetype", "extension", "size",
+					"created_at", "updated_at", "deleted_at",
+				}).AddRow(
+					"mock-unique-id",
+					"mock-name",
+					"mock-path",
+					"mock-mimetype",
+					"mock-extension",
+					0,
+					0,
+					0,
+					1, //deleted
+				)
+
+				dbClient.ExpectBegin()
+				dbClient.ExpectQuery(findFileQuery).WillReturnRows(fileRows)
+				dbClient.ExpectRollback()
+
+				res, err := repo.DeleteFile(ctx, p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(repository.ErrorRecordDeleted))
 			})
 		})
 
