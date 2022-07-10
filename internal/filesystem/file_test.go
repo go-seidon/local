@@ -27,7 +27,7 @@ var _ = Describe("File Manager", func() {
 		})
 	})
 
-	Describe("Fila Manager", Label("integration"), func() {
+	Describe("File Manager", Label("integration"), func() {
 		var (
 			ctx context.Context
 			fm  filesystem.FileManager

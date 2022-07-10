@@ -2,13 +2,19 @@ package filesystem
 
 import (
 	"context"
+	"errors"
 	"io/fs"
 	"os"
 	"time"
 )
 
 type DirectoryManager interface {
+	IsDirectoryExists(ctx context.Context, p IsDirectoryExistsParam) (bool, error)
 	CreateDir(ctx context.Context, p CreateDirParam) (*CreateDirResult, error)
+}
+
+type IsDirectoryExistsParam struct {
+	Path string
 }
 
 type CreateDirParam struct {
@@ -21,6 +27,20 @@ type CreateDirResult struct {
 }
 
 type directoryManager struct {
+}
+
+func (dm *directoryManager) IsDirectoryExists(ctx context.Context, p IsDirectoryExistsParam) (bool, error) {
+	_, err := os.Stat(p.Path)
+	if err == nil {
+		return true, nil
+	}
+
+	notExists := errors.Is(err, os.ErrNotExist)
+	if notExists {
+		return false, nil
+	}
+
+	return false, err
 }
 
 func (dm *directoryManager) CreateDir(ctx context.Context, p CreateDirParam) (*CreateDirResult, error) {

@@ -27,6 +27,46 @@ var _ = Describe("Directory Manager", func() {
 			dm  filesystem.DirectoryManager
 		)
 
+		BeforeEach(func() {
+			ctx = context.Background()
+			dm = filesystem.NewDirectoryManager()
+		})
+
+		Context("IsDirectoryExists function", func() {
+			When("folder is available", func() {
+				It("should return result", func() {
+					res, err := dm.IsDirectoryExists(ctx, filesystem.IsDirectoryExistsParam{
+						Path: "/",
+					})
+
+					Expect(res).To(BeTrue())
+					Expect(err).To(BeNil())
+				})
+			})
+
+			When("folder is unavailable", func() {
+				It("should return result", func() {
+					res, err := dm.IsDirectoryExists(ctx, filesystem.IsDirectoryExistsParam{
+						Path: "",
+					})
+
+					Expect(res).To(BeFalse())
+					Expect(err).To(BeNil())
+				})
+			})
+
+			When("unexpected error happened", func() {
+				It("should return error", func() {
+					res, err := dm.IsDirectoryExists(ctx, filesystem.IsDirectoryExistsParam{
+						Path: "\000",
+					})
+
+					Expect(res).To(BeFalse())
+					Expect(err).ToNot(BeNil())
+				})
+			})
+		})
+
 		Context("CreateDir function", Ordered, func() {
 			var (
 				tempDir string

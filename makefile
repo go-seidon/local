@@ -58,6 +58,7 @@ generate-mock:
 	mockgen -package=mock -source internal/logging/log.go -destination=internal/mock/logging_log_mock.go
 	mockgen -package=mock -source internal/serialization/serializer.go -destination=internal/mock/serialization_serializer_mock.go
 	mockgen -package=mock -source internal/filesystem/file.go -destination=internal/mock/filesystem_file_mock.go
+	mockgen -package=mock -source internal/filesystem/directory.go -destination=internal/mock/filesystem_directory_mock.go
 	mockgen -package=mock -source internal/app/server.go -destination=internal/mock/app_server_mock.go
 	mockgen -package=mock -source internal/app/repository.go -destination=internal/mock/app_repository_mock.go
 	mockgen -package=mock -source internal/repository/file.go -destination=internal/mock/repository_file_mock.go
