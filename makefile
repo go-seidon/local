@@ -54,6 +54,7 @@ test-watch-integration:
 
 .PHONY: generate-mock
 generate-mock:
+	mockgen -package=mock -source internal/text/id.go -destination=internal/mock/text_id_mock.go
 	mockgen -package=mock -source internal/datetime/clock.go -destination=internal/mock/datetime_clock_mock.go
 	mockgen -package=mock -source internal/logging/log.go -destination=internal/mock/logging_log_mock.go
 	mockgen -package=mock -source internal/serialization/serializer.go -destination=internal/mock/serialization_serializer_mock.go
