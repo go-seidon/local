@@ -7,11 +7,13 @@ import (
 
 type (
 	DeleteFn func(ctx context.Context, p DeleteFnParam) error
+	CreateFn func(ctx context.Context, p CreateFnParam) error
 )
 
 type FileRepository interface {
 	DeleteFile(ctx context.Context, p DeleteFileParam) (*DeleteFileResult, error)
 	RetrieveFile(ctx context.Context, p RetrieveFileParam) (*RetrieveFileResult, error)
+	CreateFile(ctx context.Context, p CreateFileParam) (*CreateFileResult, error)
 }
 
 type DeleteFileParam struct {
@@ -37,4 +39,28 @@ type RetrieveFileResult struct {
 	Path      string
 	MimeType  string
 	Extension string
+}
+
+type CreateFileParam struct {
+	UniqueId  string
+	Name      string
+	Path      string
+	Mimetype  string
+	Extension string
+	Size      int64
+	CreateFn  CreateFn
+}
+
+type CreateFnParam struct {
+	FilePath string
+}
+
+type CreateFileResult struct {
+	UniqueId  string
+	Name      string
+	Path      string
+	Mimetype  string
+	Extension string
+	Size      int64
+	CreatedAt time.Time
 }
