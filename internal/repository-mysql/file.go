@@ -115,6 +115,59 @@ func (r *FileRepository) RetrieveFile(ctx context.Context, p repository.Retrieve
 	return res, nil
 }
 
+func (r *FileRepository) CreateFile(ctx context.Context, p repository.CreateFileParam) (*repository.CreateFileResult, error) {
+	currentTimestamp := r.clock.Now()
+
+	tx, err := r.dbClient.BeginTx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	sqlQuery := `
+		INSERT INTO file (unique_id, name, path, extension, size, created_at, updated_at) 
+		VALUES ('?', '?', '?', '?', '?', '?', '?')
+	`
+	_, err = tx.Exec(
+		sqlQuery,
+		p.UniqueId,
+		p.Name,
+		p.Path,
+		p.Extension,
+		p.Size,
+		currentTimestamp.UnixMilli(),
+		currentTimestamp.UnixMilli(),
+	)
+	if err != nil {
+		txErr := tx.Rollback()
+		if txErr != nil {
+			return nil, txErr
+		}
+		return nil, err
+	}
+
+	err = p.CreateFn(ctx, repository.CreateFnParam{
+		FilePath: p.Path,
+	})
+	if err != nil {
+		txErr := tx.Rollback()
+		if txErr != nil {
+			return nil, txErr
+		}
+		return nil, err
+	}
+
+	res := &repository.CreateFileResult{
+		UniqueId:  p.UniqueId,
+		Name:      p.Name,
+		Path:      p.Path,
+		Mimetype:  p.Mimetype,
+		Extension: p.Extension,
+		Size:      p.Size,
+		CreatedAt: currentTimestamp,
+	}
+	return res, nil
+}
+
 func (r *FileRepository) findFile(ctx context.Context, p findFileParam) (*findFileResult, error) {
 	var q Query
 	q = r.dbClient
