@@ -218,7 +218,7 @@ var _ = Describe("Uploader Service", func() {
 			fileManager      *mock.MockFileManager
 			dirManager       *mock.MockDirectoryManager
 			logger           *mock.MockLogger
-			writer           *mock.MockReadWriter
+			reader           *mock.MockReader
 			identifier       *mock.MockIdentifier
 			s                uploading.Uploader
 			dirExistsParam   filesystem.IsDirectoryExistsParam
@@ -237,7 +237,7 @@ var _ = Describe("Uploader Service", func() {
 			dirManager = mock.NewMockDirectoryManager(ctrl)
 			logger = mock.NewMockLogger(ctrl)
 			identifier = mock.NewMockIdentifier(ctrl)
-			writer = mock.NewMockReadWriter(ctrl)
+			reader = mock.NewMockReader(ctrl)
 			s, _ = uploading.NewUploader(uploading.NewUploaderParam{
 				FileRepo:    fileRepo,
 				FileManager: fileManager,
@@ -331,7 +331,7 @@ var _ = Describe("Uploader Service", func() {
 			})
 		})
 
-		When("failed read from file writer", func() {
+		When("failed read from file reader", func() {
 			It("should return error", func() {
 				dirManager.
 					EXPECT().
@@ -342,13 +342,13 @@ var _ = Describe("Uploader Service", func() {
 					EXPECT().
 					CreateDir(gomock.Eq(ctx), gomock.Eq(createDirParam)).
 					Times(0)
-				writer.
+				reader.
 					EXPECT().
 					Read(gomock.Any()).
 					Return(0, fmt.Errorf("disk error")).
 					Times(1)
 
-				fwOpt := uploading.WithWriter(writer)
+				fwOpt := uploading.WithReader(reader)
 				copts := opts
 				copts = append(copts, fwOpt)
 
@@ -370,7 +370,7 @@ var _ = Describe("Uploader Service", func() {
 					EXPECT().
 					CreateDir(gomock.Eq(ctx), gomock.Eq(createDirParam)).
 					Times(0)
-				writer.
+				reader.
 					EXPECT().
 					Read(gomock.Any()).
 					Return(0, io.EOF).
@@ -381,7 +381,7 @@ var _ = Describe("Uploader Service", func() {
 					Return("", fmt.Errorf("generate error")).
 					Times(1)
 
-				fwOpt := uploading.WithWriter(writer)
+				fwOpt := uploading.WithReader(reader)
 				copts := opts
 				copts = append(copts, fwOpt)
 
