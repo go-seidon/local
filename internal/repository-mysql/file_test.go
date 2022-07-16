@@ -95,19 +95,19 @@ var _ = Describe("File Repository", func() {
 					return nil
 				},
 			}
-			findFileQuery = `
+			findFileQuery = regexp.QuoteMeta(`
 				SELECT 
 					unique_id, name, path,
 					mimetype, extension, size,
 					created_at, updated_at, deleted_at
 				FROM file
 				WHERE unique_id = ?
-			`
-			deleteFileQuery = fmt.Sprintf(
-				"UPDATE file SET deleted_at = '%d' WHERE unique_id = '%s'",
-				currentTimestamp.UnixMilli(),
-				p.UniqueId,
-			)
+			`)
+			deleteFileQuery = regexp.QuoteMeta(`
+				UPDATE file 
+				SET deleted_at = ?
+				WHERE unique_id = ?
+			`)
 			fileRows = sqlmock.NewRows([]string{
 				"unique_id", "name", "path",
 				"mimetype", "extension", "size",
@@ -285,7 +285,13 @@ var _ = Describe("File Repository", func() {
 			It("should return error", func() {
 				dbClient.ExpectBegin()
 				dbClient.ExpectQuery(findFileQuery).WillReturnRows(fileRows)
-				dbClient.ExpectExec(deleteFileQuery).WillReturnError(fmt.Errorf("db error"))
+				dbClient.
+					ExpectExec(deleteFileQuery).
+					WithArgs(
+						currentTimestamp.UnixMilli(),
+						p.UniqueId,
+					).
+					WillReturnError(fmt.Errorf("db error"))
 				dbClient.ExpectRollback().WillReturnError(fmt.Errorf("rollback error"))
 
 				res, err := repo.DeleteFile(ctx, p)
@@ -299,7 +305,13 @@ var _ = Describe("File Repository", func() {
 			It("should return error", func() {
 				dbClient.ExpectBegin()
 				dbClient.ExpectQuery(findFileQuery).WillReturnRows(fileRows)
-				dbClient.ExpectExec(deleteFileQuery).WillReturnResult(driver.ResultNoRows)
+				dbClient.
+					ExpectExec(deleteFileQuery).
+					WithArgs(
+						currentTimestamp.UnixMilli(),
+						p.UniqueId,
+					).
+					WillReturnResult(driver.ResultNoRows)
 				dbClient.ExpectRollback()
 
 				res, err := repo.DeleteFile(ctx, p)
@@ -313,7 +325,13 @@ var _ = Describe("File Repository", func() {
 			It("should return error", func() {
 				dbClient.ExpectBegin()
 				dbClient.ExpectQuery(findFileQuery).WillReturnRows(fileRows)
-				dbClient.ExpectExec(deleteFileQuery).WillReturnResult(driver.ResultNoRows)
+				dbClient.
+					ExpectExec(deleteFileQuery).
+					WithArgs(
+						currentTimestamp.UnixMilli(),
+						p.UniqueId,
+					).
+					WillReturnResult(driver.ResultNoRows)
 				dbClient.ExpectRollback().WillReturnError(fmt.Errorf("rollback error"))
 
 				res, err := repo.DeleteFile(ctx, p)
@@ -327,7 +345,13 @@ var _ = Describe("File Repository", func() {
 			It("should return error", func() {
 				dbClient.ExpectBegin()
 				dbClient.ExpectQuery(findFileQuery).WillReturnRows(fileRows)
-				dbClient.ExpectExec(deleteFileQuery).WillReturnResult(driver.RowsAffected(1))
+				dbClient.
+					ExpectExec(deleteFileQuery).
+					WithArgs(
+						currentTimestamp.UnixMilli(),
+						p.UniqueId,
+					).
+					WillReturnResult(driver.RowsAffected(1))
 				p.DeleteFn = func(ctx context.Context, p repository.DeleteFnParam) error {
 					return fmt.Errorf("delete fn error")
 				}
@@ -344,7 +368,13 @@ var _ = Describe("File Repository", func() {
 			It("should return error", func() {
 				dbClient.ExpectBegin()
 				dbClient.ExpectQuery(findFileQuery).WillReturnRows(fileRows)
-				dbClient.ExpectExec(deleteFileQuery).WillReturnResult(driver.RowsAffected(1))
+				dbClient.
+					ExpectExec(deleteFileQuery).
+					WithArgs(
+						currentTimestamp.UnixMilli(),
+						p.UniqueId,
+					).
+					WillReturnResult(driver.RowsAffected(1))
 				p.DeleteFn = func(ctx context.Context, p repository.DeleteFnParam) error {
 					return fmt.Errorf("delete fn error")
 				}
@@ -361,7 +391,13 @@ var _ = Describe("File Repository", func() {
 			It("should return error", func() {
 				dbClient.ExpectBegin()
 				dbClient.ExpectQuery(findFileQuery).WillReturnRows(fileRows)
-				dbClient.ExpectExec(deleteFileQuery).WillReturnResult(driver.RowsAffected(1))
+				dbClient.
+					ExpectExec(deleteFileQuery).
+					WithArgs(
+						currentTimestamp.UnixMilli(),
+						p.UniqueId,
+					).
+					WillReturnResult(driver.RowsAffected(1))
 				dbClient.ExpectCommit().WillReturnError(fmt.Errorf("commit error"))
 
 				res, err := repo.DeleteFile(ctx, p)
@@ -375,7 +411,13 @@ var _ = Describe("File Repository", func() {
 			It("should return result", func() {
 				dbClient.ExpectBegin()
 				dbClient.ExpectQuery(findFileQuery).WillReturnRows(fileRows)
-				dbClient.ExpectExec(deleteFileQuery).WillReturnResult(driver.RowsAffected(1))
+				dbClient.
+					ExpectExec(deleteFileQuery).
+					WithArgs(
+						currentTimestamp.UnixMilli(),
+						p.UniqueId,
+					).
+					WillReturnResult(driver.RowsAffected(1))
 				dbClient.ExpectCommit()
 
 				res, err := repo.DeleteFile(ctx, p)
@@ -495,14 +537,14 @@ var _ = Describe("File Repository", func() {
 			p = repository.RetrieveFileParam{
 				UniqueId: "mock-unique-id",
 			}
-			findFileQuery = `
+			findFileQuery = regexp.QuoteMeta(`
 				SELECT 
 					unique_id, name, path,
 					mimetype, extension, size,
 					created_at, updated_at, deleted_at
 				FROM file
 				WHERE unique_id = ?
-			`
+			`)
 			fileRows = sqlmock.NewRows([]string{
 				"unique_id", "name", "path",
 				"mimetype", "extension", "size",
@@ -661,8 +703,11 @@ var _ = Describe("File Repository", func() {
 				},
 			}
 			insertSqlQuery = regexp.QuoteMeta(`
-				INSERT INTO file (unique_id, name, path, extension, size, created_at, updated_at) 
-				VALUES ('?', '?', '?', '?', '?', '?', '?')
+				INSERT INTO file (
+					unique_id, name, path, extension, size, 
+					created_at, updated_at
+				) 
+				VALUES (?, ?, ?, ?, ?, ?, ?)
 			`)
 		})
 
