@@ -7,8 +7,9 @@
 No doc right now
 
 ## Todo
-1. Add uploading.location unit test
-2. Refactor exec DeleteFile using Exec args
+1. Refactor exec DeleteFile using Exec args
+2. Uploading rest implementation
+3. Change `file.id` to varchar and remove `file.unique_id` (id should be geenrated by the client app)
 
 ## Nice to have
 1. Separate findFile query in DeleteFile and RetrieveFile
