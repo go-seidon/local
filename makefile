@@ -84,10 +84,6 @@ build-grpc-app:
 build-rest-app:
 	go build -o ./build/rest-app/ ./cmd/rest-app/main.go
 
-.PHONY: run-docker-dev
-run-docker-dev:
-	docker-compose up -d
-
 ifeq (migrate-mysql,$(firstword $(MAKECMDGOALS)))
   # use the rest as arguments for "migrate-mysql"
   MIGRATE_MYSQL_RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))

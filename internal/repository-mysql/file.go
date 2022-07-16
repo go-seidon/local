@@ -47,12 +47,16 @@ func (r *FileRepository) DeleteFile(ctx context.Context, p repository.DeleteFile
 		return nil, repository.ErrorRecordDeleted
 	}
 
-	sqlQuery := fmt.Sprintf(
-		"UPDATE file SET deleted_at = '%d' WHERE unique_id = '%s'",
+	deleteQuery := `
+		UPDATE file 
+		SET deleted_at = ?
+		WHERE unique_id = ?
+	`
+	qRes, err := tx.Exec(
+		deleteQuery,
 		currentTimestamp.UnixMilli(),
 		file.UniqueId,
 	)
-	qRes, err := tx.Exec(sqlQuery)
 	if err != nil {
 		txErr := tx.Rollback()
 		if txErr != nil {
@@ -123,12 +127,15 @@ func (r *FileRepository) CreateFile(ctx context.Context, p repository.CreateFile
 		return nil, err
 	}
 
-	sqlQuery := `
-		INSERT INTO file (unique_id, name, path, extension, size, created_at, updated_at) 
-		VALUES ('?', '?', '?', '?', '?', '?', '?')
+	insertQuery := `
+		INSERT INTO file (
+			unique_id, name, path, extension, size, 
+			created_at, updated_at
+		) 
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
 	_, err = tx.Exec(
-		sqlQuery,
+		insertQuery,
 		p.UniqueId,
 		p.Name,
 		p.Path,
