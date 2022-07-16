@@ -26,13 +26,78 @@ No doc right now
 - mongo
 3. Config
 - system environment
+- file (config/*.toml and .env)
 
 ## Run
-### Docker
-1. First running: `docker-compose up -d`
+### Test
+1. Unit test
+
+This particular command should test individual component and run really fast without the need of involving 3rd party dependencies such as database, disk, etc.
+
+```
+  $ make test-unit
+  $ make test-watch-unit
+```
+
+2. Integration test
+
+This particular command should test the integration between component, might run slowly and sometimes need to involving 3rd party dependencies such as database, disk, etc.
+
+```
+  $ make test-integration
+  $ make test-watch-integration
+```
+
+3. Coverage test
+
+This command should run all the test available on this project.
+
+```
+  $ make test
+  $ make test-coverage
+```
+
+### App
+1. REST App
+
+```
+  $ run-rest-app
+  $ build-rest-app
+```
+
+2. GRPC App
+
+```
+  $ run-grpc-app
+  $ build-grpc-app
+```
+
+3. Hybrid App
+
+```
+  TBA
+```
+
+### Development
+1. Create docker compose
+```
+  $ docker-compose up -d
+```
+
 2. MySQL database: 
-- `docker-compose up mysql-database`
-- `docker-compose stop mysql-database`
+```
+ $ docker-compose up mysql-database
+ $ docker-compose stop mysql-database
+```
+
 3. MySQL Test database:
-- `docker-compose up mysql-test-database`
-- `docker-compose stop mysql-test-database`
+```
+ $ docker-compose up mysql-test-database
+ $ docker-compose stop mysql-test-database
+```
+
+4. MySQL Migration
+```bash
+  $ migrate-mysql-create [args] # args e.g: migrate-mysql-create file-table
+  $ migrate-mysql [args] # args e.g: migrate-mysql up
+```
