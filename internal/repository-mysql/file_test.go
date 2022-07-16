@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"regexp"
 	"testing"
 	"time"
 
@@ -494,6 +495,14 @@ var _ = Describe("File Repository", func() {
 			p = repository.RetrieveFileParam{
 				UniqueId: "mock-unique-id",
 			}
+			findFileQuery = `
+				SELECT 
+					unique_id, name, path,
+					mimetype, extension, size,
+					created_at, updated_at, deleted_at
+				FROM file
+				WHERE unique_id = ?
+			`
 			fileRows = sqlmock.NewRows([]string{
 				"unique_id", "name", "path",
 				"mimetype", "extension", "size",
@@ -607,4 +616,191 @@ var _ = Describe("File Repository", func() {
 			})
 		})
 	})
+
+	Context("CreateFile function", Label("unit"), func() {
+		var (
+			ctx              context.Context
+			currentTimestamp time.Time
+			dbClient         sqlmock.Sqlmock
+			repo             *repository_mysql.FileRepository
+			p                repository.CreateFileParam
+			insertSqlQuery   string
+		)
+
+		BeforeEach(func() {
+			t := GinkgoT()
+			ctrl := gomock.NewController(t)
+			ctx = context.Background()
+			currentTimestamp = time.Now()
+			clock := mock.NewMockClock(ctrl)
+			clock.
+				EXPECT().
+				Now().
+				Return(currentTimestamp).
+				Times(1)
+
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				AbortSuite("failed create db mock: " + err.Error())
+			}
+			dbClient = mock
+
+			dbOpt := repository_mysql.WithDbClient(db)
+			clockOpt := repository_mysql.WithClock(clock)
+			repo, _ = repository_mysql.NewFileRepository(dbOpt, clockOpt)
+
+			p = repository.CreateFileParam{
+				UniqueId:  "mock-unique-id",
+				Name:      "mock-name",
+				Path:      "/temp",
+				Mimetype:  "image/jpeg",
+				Extension: "jpg",
+				Size:      200,
+				CreateFn: func(ctx context.Context, p repository.CreateFnParam) error {
+					return nil
+				},
+			}
+			insertSqlQuery = regexp.QuoteMeta(`
+				INSERT INTO file (unique_id, name, path, extension, size, created_at, updated_at) 
+				VALUES ('?', '?', '?', '?', '?', '?', '?')
+			`)
+		})
+
+		When("failed start db trx", func() {
+			It("should return error", func() {
+				dbClient.
+					ExpectBegin().
+					WillReturnError(fmt.Errorf("db error"))
+
+				res, err := repo.CreateFile(ctx, p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("db error")))
+			})
+		})
+
+		When("failed rollback insert record", func() {
+			It("should return error", func() {
+				dbClient.ExpectBegin()
+				dbClient.
+					ExpectExec(insertSqlQuery).
+					WithArgs(
+						p.UniqueId, p.Name, p.Path,
+						p.Extension, p.Size,
+						currentTimestamp.UnixMilli(),
+						currentTimestamp.UnixMilli(),
+					).
+					WillReturnError(fmt.Errorf("insert error"))
+				dbClient.ExpectRollback().
+					WillReturnError(fmt.Errorf("rollback error"))
+
+				res, err := repo.CreateFile(ctx, p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("rollback error")))
+			})
+		})
+
+		When("failed insert record", func() {
+			It("should return error", func() {
+				dbClient.ExpectBegin()
+				dbClient.
+					ExpectExec(insertSqlQuery).
+					WithArgs(
+						p.UniqueId, p.Name, p.Path,
+						p.Extension, p.Size,
+						currentTimestamp.UnixMilli(),
+						currentTimestamp.UnixMilli(),
+					).
+					WillReturnError(fmt.Errorf("insert error"))
+				dbClient.ExpectRollback()
+
+				res, err := repo.CreateFile(ctx, p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("insert error")))
+			})
+		})
+
+		When("failed rollback execute create fn", func() {
+			It("should return error", func() {
+				dbClient.ExpectBegin()
+				dbClient.
+					ExpectExec(insertSqlQuery).
+					WithArgs(
+						p.UniqueId, p.Name, p.Path,
+						p.Extension, p.Size,
+						currentTimestamp.UnixMilli(),
+						currentTimestamp.UnixMilli(),
+					).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				p.CreateFn = func(ctx context.Context, p repository.CreateFnParam) error {
+					return fmt.Errorf("execute error")
+				}
+				dbClient.
+					ExpectRollback().
+					WillReturnError(fmt.Errorf("rollback error"))
+
+				res, err := repo.CreateFile(ctx, p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("rollback error")))
+			})
+		})
+
+		When("failed execute create fn", func() {
+			It("should return error", func() {
+				dbClient.ExpectBegin()
+				dbClient.
+					ExpectExec(insertSqlQuery).
+					WithArgs(
+						p.UniqueId, p.Name, p.Path,
+						p.Extension, p.Size,
+						currentTimestamp.UnixMilli(),
+						currentTimestamp.UnixMilli(),
+					).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				p.CreateFn = func(ctx context.Context, p repository.CreateFnParam) error {
+					return fmt.Errorf("execute error")
+				}
+				dbClient.ExpectRollback()
+
+				res, err := repo.CreateFile(ctx, p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("execute error")))
+			})
+		})
+
+		When("success create file", func() {
+			It("should return result", func() {
+				dbClient.ExpectBegin()
+				dbClient.
+					ExpectExec(insertSqlQuery).
+					WithArgs(
+						p.UniqueId, p.Name, p.Path,
+						p.Extension, p.Size,
+						currentTimestamp.UnixMilli(),
+						currentTimestamp.UnixMilli(),
+					).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				dbClient.ExpectCommit()
+
+				res, err := repo.CreateFile(ctx, p)
+
+				expectedRes := &repository.CreateFileResult{
+					UniqueId:  p.UniqueId,
+					Name:      p.Name,
+					Path:      p.Path,
+					Mimetype:  p.Mimetype,
+					Extension: p.Extension,
+					Size:      p.Size,
+					CreatedAt: currentTimestamp,
+				}
+				Expect(res).To(Equal(expectedRes))
+				Expect(err).To(BeNil())
+			})
+		})
+	})
+
 })

@@ -7,11 +7,14 @@
 No doc right now
 
 ## Todo
-1. Upload file
+1. Refactor exec DeleteFile using Exec args
+2. Uploading rest implementation
+3. Change `file.id` to varchar and remove `file.unique_id` (id should be geenrated by the client app)
 
 ## Nice to have
 1. Separate findFile query in DeleteFile and RetrieveFile
 2. File meta for storing file related data, e.g: user_id, feature, category, etc
+3. Store directory checking result in memory when uploading file to reduce r/w to the disk (dirManager)
 
 ## Technical Stack
 1. Transport layer

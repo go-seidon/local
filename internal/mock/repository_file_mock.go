@@ -35,6 +35,21 @@ func (m *MockFileRepository) EXPECT() *MockFileRepositoryMockRecorder {
 	return m.recorder
 }
 
+// CreateFile mocks base method.
+func (m *MockFileRepository) CreateFile(ctx context.Context, p repository.CreateFileParam) (*repository.CreateFileResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateFile", ctx, p)
+	ret0, _ := ret[0].(*repository.CreateFileResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateFile indicates an expected call of CreateFile.
+func (mr *MockFileRepositoryMockRecorder) CreateFile(ctx, p interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFile", reflect.TypeOf((*MockFileRepository)(nil).CreateFile), ctx, p)
+}
+
 // DeleteFile mocks base method.
 func (m *MockFileRepository) DeleteFile(ctx context.Context, p repository.DeleteFileParam) (*repository.DeleteFileResult, error) {
 	m.ctrl.T.Helper()
