@@ -3,6 +3,7 @@ package uploading_test
 import (
 	"context"
 	"fmt"
+	"io"
 	"testing"
 	"time"
 
@@ -120,7 +121,6 @@ var _ = Describe("Uploader Service", func() {
 		)
 
 		BeforeEach(func() {
-			// currentTimestamp := time.Now()
 			ctx = context.Background()
 			t := GinkgoT()
 			ctrl := gomock.NewController(t)
@@ -345,7 +345,8 @@ var _ = Describe("Uploader Service", func() {
 				writer.
 					EXPECT().
 					Read(gomock.Any()).
-					Return(0, fmt.Errorf("disk error"))
+					Return(0, fmt.Errorf("disk error")).
+					Times(1)
 
 				fwOpt := uploading.WithWriter(writer)
 				copts := opts
@@ -369,13 +370,22 @@ var _ = Describe("Uploader Service", func() {
 					EXPECT().
 					CreateDir(gomock.Eq(ctx), gomock.Eq(createDirParam)).
 					Times(0)
+				writer.
+					EXPECT().
+					Read(gomock.Any()).
+					Return(0, io.EOF).
+					Times(1)
 				identifier.
 					EXPECT().
 					GenerateId().
 					Return("", fmt.Errorf("generate error")).
 					Times(1)
 
-				res, err := s.UploadFile(ctx, opts...)
+				fwOpt := uploading.WithWriter(writer)
+				copts := opts
+				copts = append(copts, fwOpt)
+
+				res, err := s.UploadFile(ctx, copts...)
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("generate error")))

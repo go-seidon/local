@@ -26,7 +26,7 @@ type NewDailyRotateParam struct {
 	Clock datetime.Clock
 }
 
-func NewDailyRotate(p NewDailyRotateParam) (*dailyRotate, error) {
+func NewDailyRotate(p NewDailyRotateParam) *dailyRotate {
 	var clock datetime.Clock
 	if p.Clock != nil {
 		clock = p.Clock
@@ -37,5 +37,5 @@ func NewDailyRotate(p NewDailyRotateParam) (*dailyRotate, error) {
 	l := &dailyRotate{
 		clock: clock,
 	}
-	return l, nil
+	return l
 }
