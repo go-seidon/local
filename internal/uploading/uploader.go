@@ -18,7 +18,7 @@ type Uploader interface {
 
 type UploadFileParam struct {
 	fileData   []byte
-	fileWriter io.ReadWriter
+	fileReader io.Reader
 
 	fileDir string
 
@@ -33,13 +33,13 @@ type UploadFileOption = func(*UploadFileParam)
 func WithData(d []byte) UploadFileOption {
 	return func(ufp *UploadFileParam) {
 		ufp.fileData = d
-		ufp.fileWriter = nil
+		ufp.fileReader = nil
 	}
 }
 
-func WithWriter(w io.ReadWriter) UploadFileOption {
+func WithReader(w io.Reader) UploadFileOption {
 	return func(ufp *UploadFileParam) {
-		ufp.fileWriter = w
+		ufp.fileReader = w
 		ufp.fileData = nil
 	}
 }
@@ -111,7 +111,7 @@ func (s *uploader) UploadFile(ctx context.Context, opts ...UploadFileOption) (*U
 		opt(&p)
 	}
 
-	if p.fileData == nil && p.fileWriter == nil {
+	if p.fileData == nil && p.fileReader == nil {
 		return nil, fmt.Errorf("invalid file is not specified")
 	}
 	if p.fileDir == "" {
@@ -136,8 +136,8 @@ func (s *uploader) UploadFile(ctx context.Context, opts ...UploadFileOption) (*U
 	}
 
 	data := p.fileData
-	if p.fileWriter != nil {
-		byte, err := io.ReadAll(p.fileWriter)
+	if p.fileReader != nil {
+		byte, err := io.ReadAll(p.fileReader)
 		if err != nil {
 			return nil, err
 		}

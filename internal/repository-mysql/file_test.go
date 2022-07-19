@@ -704,10 +704,11 @@ var _ = Describe("File Repository", func() {
 			}
 			insertSqlQuery = regexp.QuoteMeta(`
 				INSERT INTO file (
-					unique_id, name, path, extension, size, 
+					unique_id, name, path, 
+					mimetype, extension, size, 
 					created_at, updated_at
 				) 
-				VALUES (?, ?, ?, ?, ?, ?, ?)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 			`)
 		})
 
@@ -731,7 +732,7 @@ var _ = Describe("File Repository", func() {
 					ExpectExec(insertSqlQuery).
 					WithArgs(
 						p.UniqueId, p.Name, p.Path,
-						p.Extension, p.Size,
+						p.Mimetype, p.Extension, p.Size,
 						currentTimestamp.UnixMilli(),
 						currentTimestamp.UnixMilli(),
 					).
@@ -753,7 +754,7 @@ var _ = Describe("File Repository", func() {
 					ExpectExec(insertSqlQuery).
 					WithArgs(
 						p.UniqueId, p.Name, p.Path,
-						p.Extension, p.Size,
+						p.Mimetype, p.Extension, p.Size,
 						currentTimestamp.UnixMilli(),
 						currentTimestamp.UnixMilli(),
 					).
@@ -774,7 +775,7 @@ var _ = Describe("File Repository", func() {
 					ExpectExec(insertSqlQuery).
 					WithArgs(
 						p.UniqueId, p.Name, p.Path,
-						p.Extension, p.Size,
+						p.Mimetype, p.Extension, p.Size,
 						currentTimestamp.UnixMilli(),
 						currentTimestamp.UnixMilli(),
 					).
@@ -800,7 +801,7 @@ var _ = Describe("File Repository", func() {
 					ExpectExec(insertSqlQuery).
 					WithArgs(
 						p.UniqueId, p.Name, p.Path,
-						p.Extension, p.Size,
+						p.Mimetype, p.Extension, p.Size,
 						currentTimestamp.UnixMilli(),
 						currentTimestamp.UnixMilli(),
 					).
@@ -817,6 +818,29 @@ var _ = Describe("File Repository", func() {
 			})
 		})
 
+		When("failed commit db trx", func() {
+			It("should return error", func() {
+				dbClient.ExpectBegin()
+				dbClient.
+					ExpectExec(insertSqlQuery).
+					WithArgs(
+						p.UniqueId, p.Name, p.Path,
+						p.Mimetype, p.Extension, p.Size,
+						currentTimestamp.UnixMilli(),
+						currentTimestamp.UnixMilli(),
+					).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				dbClient.
+					ExpectCommit().
+					WillReturnError(fmt.Errorf("commit error"))
+
+				res, err := repo.CreateFile(ctx, p)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("commit error")))
+			})
+		})
+
 		When("success create file", func() {
 			It("should return result", func() {
 				dbClient.ExpectBegin()
@@ -824,7 +848,7 @@ var _ = Describe("File Repository", func() {
 					ExpectExec(insertSqlQuery).
 					WithArgs(
 						p.UniqueId, p.Name, p.Path,
-						p.Extension, p.Size,
+						p.Mimetype, p.Extension, p.Size,
 						currentTimestamp.UnixMilli(),
 						currentTimestamp.UnixMilli(),
 					).

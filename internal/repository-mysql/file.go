@@ -129,16 +129,18 @@ func (r *FileRepository) CreateFile(ctx context.Context, p repository.CreateFile
 
 	insertQuery := `
 		INSERT INTO file (
-			unique_id, name, path, extension, size, 
+			unique_id, name, path, 
+			mimetype, extension, size, 
 			created_at, updated_at
 		) 
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`
 	_, err = tx.Exec(
 		insertQuery,
 		p.UniqueId,
 		p.Name,
 		p.Path,
+		p.Mimetype,
 		p.Extension,
 		p.Size,
 		currentTimestamp.UnixMilli(),
@@ -163,6 +165,10 @@ func (r *FileRepository) CreateFile(ctx context.Context, p repository.CreateFile
 		return nil, err
 	}
 
+	txErr := tx.Commit()
+	if txErr != nil {
+		return nil, txErr
+	}
 	res := &repository.CreateFileResult{
 		UniqueId:  p.UniqueId,
 		Name:      p.Name,

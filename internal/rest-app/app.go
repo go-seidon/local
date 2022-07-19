@@ -13,6 +13,8 @@ import (
 	"github.com/go-seidon/local/internal/logging"
 	"github.com/go-seidon/local/internal/retrieving"
 	"github.com/go-seidon/local/internal/serialization"
+	"github.com/go-seidon/local/internal/text"
+	"github.com/go-seidon/local/internal/uploading"
 
 	"github.com/gorilla/mux"
 )
@@ -59,10 +61,8 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 		return nil, fmt.Errorf("unsupported db provider")
 	}
 
-	var logger logging.Logger
-	if option.Logger != nil {
-		logger = option.Logger
-	} else {
+	logger := option.Logger
+	if option.Logger == nil {
 		opts := []logging.Option{}
 
 		appOpt := logging.WithAppContext(option.Config.AppName, option.Config.AppVersion)
@@ -94,10 +94,8 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 		return nil, err
 	}
 
-	var healthService healthcheck.HealthCheck
-	if option.HealthService != nil {
-		healthService = option.HealthService
-	} else {
+	healthService := option.HealthService
+	if option.HealthService == nil {
 		healthCheck, err := healthcheck.NewGoHealthCheck(
 			healthcheck.WithLogger(logger),
 			healthcheck.AddJob(inetPingJob),
@@ -123,6 +121,9 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 	}
 
 	fileManager := filesystem.NewFileManager()
+	dirManager := filesystem.NewDirectoryManager()
+	identifier := text.NewKsuid()
+
 	deleteService, err := deleting.NewDeleter(deleting.NewDeleterParam{
 		FileRepo:    repo.FileRepo,
 		Logger:      logger,
@@ -141,6 +142,26 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 		return nil, err
 	}
 
+	uploadService, err := uploading.NewUploader(uploading.NewUploaderParam{
+		FileRepo:    repo.FileRepo,
+		FileManager: fileManager,
+		Logger:      logger,
+		Identifier:  identifier,
+		DirManager:  dirManager,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	raCfg := &RestAppConfig{
+		AppName:        option.Config.AppName,
+		AppVersion:     option.Config.AppVersion,
+		AppHost:        option.Config.RESTAppHost,
+		AppPort:        option.Config.RESTAppPort,
+		UploadFormSize: option.Config.UploadFormSize,
+		UploadDir:      option.Config.UploadDirectory,
+	}
+	locator := uploading.NewDailyRotate(uploading.NewDailyRotateParam{})
 	serializer := serialization.NewJsonSerializer()
 
 	router := mux.NewRouter()
@@ -161,20 +182,16 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 		"/file/{unique_id}",
 		NewRetrieveFileHandler(logger, serializer, retrieveService),
 	).Methods(http.MethodGet)
+	router.HandleFunc(
+		"/file",
+		NewUploadFileHandler(logger, serializer, uploadService, locator, raCfg),
+	).Methods(http.MethodPost)
+
 	router.NotFoundHandler = NewNotFoundHandler(logger, serializer)
 	router.MethodNotAllowedHandler = NewMethodNotAllowedHandler(logger, serializer)
 
-	raCfg := &RestAppConfig{
-		AppName:    option.Config.AppName,
-		AppVersion: option.Config.AppVersion,
-		AppHost:    option.Config.RESTAppHost,
-		AppPort:    option.Config.RESTAppPort,
-	}
-
-	var server app.Server
-	if option.Server != nil {
-		server = option.Server
-	} else {
+	server := option.Server
+	if option.Server == nil {
 		server = &http.Server{
 			Addr:    raCfg.GetAddress(),
 			Handler: router,

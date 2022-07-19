@@ -19,4 +19,7 @@ type Config struct {
 	MySQLUser     string `env:"MYSQL_USER"`
 	MySQLPassword string `env:"MYSQL_PASSWORD"`
 	MySQLDBName   string `env:"MYSQL_DB_NAME"`
+
+	UploadFormSize  int64  `env:"UPLOAD_FORM_SIZE"`
+	UploadDirectory string `env:"UPLOAD_DIRECTORY"`
 }
