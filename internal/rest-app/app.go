@@ -161,7 +161,7 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 		UploadFormSize: option.Config.UploadFormSize,
 		UploadDir:      option.Config.UploadDirectory,
 	}
-
+	locator := uploading.NewDailyRotate(uploading.NewDailyRotateParam{})
 	serializer := serialization.NewJsonSerializer()
 
 	router := mux.NewRouter()
@@ -184,7 +184,7 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 	).Methods(http.MethodGet)
 	router.HandleFunc(
 		"/file",
-		NewUploadFileHandler(logger, serializer, uploadService, raCfg),
+		NewUploadFileHandler(logger, serializer, uploadService, locator, raCfg),
 	).Methods(http.MethodPost)
 
 	router.NotFoundHandler = NewNotFoundHandler(logger, serializer)

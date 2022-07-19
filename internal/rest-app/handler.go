@@ -247,26 +247,22 @@ func NewRetrieveFileHandler(log logging.Logger, serializer serialization.Seriali
 	}
 }
 
-// @todo: add test
-func NewUploadFileHandler(log logging.Logger, serializer serialization.Serializer, uploader uploading.Uploader, config *RestAppConfig) http.HandlerFunc {
+func NewUploadFileHandler(log logging.Logger, serializer serialization.Serializer, uploader uploading.Uploader, locator uploading.UploadLocation, config *RestAppConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.Debug("In function: UploadFileHandler")
 		defer log.Debug("Returning function: UploadFileHandler")
 
-		var res []byte
-		var b ResponseBody
-
-		// add 1KB (non file size estimation if any)
+		// set form max size + add 1KB (non file size estimation if any)
 		req.Body = http.MaxBytesReader(w, req.Body, config.UploadFormSize+1024)
 
 		file, fileHeader, err := req.FormFile("file")
 		if err != nil {
-			b = NewResponseBody(&NewResponseBodyParam{
+			b := NewResponseBody(&NewResponseBodyParam{
 				Code:    CODE_ERROR,
 				Message: err.Error(),
 			})
 
-			res, _ = serializer.Encode(b)
+			res, _ := serializer.Encode(b)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write(res)
 
@@ -276,23 +272,23 @@ func NewUploadFileHandler(log logging.Logger, serializer serialization.Serialize
 
 		fileInfo, err := ParseMultipartFile(file, fileHeader)
 		if err != nil {
-			b = NewResponseBody(&NewResponseBodyParam{
+			b := NewResponseBody(&NewResponseBodyParam{
 				Code:    CODE_ERROR,
 				Message: err.Error(),
 			})
 
-			res, _ = serializer.Encode(b)
+			res, _ := serializer.Encode(b)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write(res)
 
 			return
 		}
 
-		rotator := uploading.NewDailyRotate(uploading.NewDailyRotateParam{})
-		uploadDir := fmt.Sprintf("%s/%s", config.UploadDir, rotator.GetLocation())
+		uploadDir := fmt.Sprintf("%s/%s", config.UploadDir, locator.GetLocation())
 
 		ctx := context.Background()
 		uploadRes, err := uploader.UploadFile(ctx,
+			uploading.WithReader(file),
 			uploading.WithDirectory(uploadDir),
 			uploading.WithFileInfo(
 				fileInfo.Name,
@@ -300,22 +296,21 @@ func NewUploadFileHandler(log logging.Logger, serializer serialization.Serialize
 				fileInfo.Extension,
 				fileInfo.Size,
 			),
-			uploading.WithReader(file),
 		)
 		if err != nil {
-			b = NewResponseBody(&NewResponseBodyParam{
+			b := NewResponseBody(&NewResponseBodyParam{
 				Code:    CODE_ERROR,
 				Message: err.Error(),
 			})
 
-			res, _ = serializer.Encode(b)
+			res, _ := serializer.Encode(b)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write(res)
 
 			return
 		}
 
-		b = NewResponseBody(&NewResponseBodyParam{
+		b := NewResponseBody(&NewResponseBodyParam{
 			Data: struct {
 				UniqueId   string `json:"id"`
 				Name       string `json:"name"`
@@ -334,7 +329,7 @@ func NewUploadFileHandler(log logging.Logger, serializer serialization.Serialize
 			Message: "success upload file",
 		})
 
-		res, _ = serializer.Encode(b)
+		res, _ := serializer.Encode(b)
 		w.WriteHeader(http.StatusOK)
 		w.Write(res)
 	}

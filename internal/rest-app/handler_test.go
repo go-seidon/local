@@ -1,10 +1,13 @@
 package rest_app_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"net/http/httptest"
 	"time"
 
 	"github.com/go-seidon/local/internal/deleting"
@@ -12,9 +15,12 @@ import (
 	"github.com/go-seidon/local/internal/mock"
 	rest_app "github.com/go-seidon/local/internal/rest-app"
 	"github.com/go-seidon/local/internal/retrieving"
+	"github.com/go-seidon/local/internal/serialization"
+	"github.com/go-seidon/local/internal/uploading"
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
 	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Handler Package", func() {
@@ -756,6 +762,15 @@ var _ = Describe("Handler Package", func() {
 		When("mimetype is not empty", func() {
 			It("should write response", func() {
 
+				log.
+					EXPECT().
+					Debug("In function: RetrieveFileHandler").
+					Times(1)
+				log.
+					EXPECT().
+					Debug("Returning function: RetrieveFileHandler").
+					Times(1)
+
 				fileData.
 					EXPECT().
 					Close().
@@ -777,15 +792,6 @@ var _ = Describe("Handler Package", func() {
 					DeletedAt: nil,
 				}
 
-				log.
-					EXPECT().
-					Debug("In function: RetrieveFileHandler").
-					Times(1)
-				log.
-					EXPECT().
-					Debug("Returning function: RetrieveFileHandler").
-					Times(1)
-
 				retrieveService.
 					EXPECT().
 					RetrieveFile(gomock.Eq(ctx), gomock.Eq(p)).
@@ -803,6 +809,167 @@ var _ = Describe("Handler Package", func() {
 					Times(1)
 
 				handler.ServeHTTP(w, r)
+			})
+		})
+	})
+
+	Context("NewUploadFileHandler", Label("integration"), Ordered, func() {
+		var (
+			currentTimestamp time.Time
+			ctx              context.Context
+			ctrl             *gomock.Controller
+			r                *http.Request
+			body             *bytes.Buffer
+			writer           *multipart.Writer
+			handler          http.HandlerFunc
+			log              *mock.MockLogger
+			serializer       serialization.Serializer
+			uploadService    *mock.MockUploader
+			locator          *mock.MockUploadLocation
+		)
+
+		BeforeEach(func() {
+			currentTimestamp = time.Now()
+			t := GinkgoT()
+			ctx = context.Background()
+			ctrl = gomock.NewController(t)
+
+			body = new(bytes.Buffer)
+			writer = multipart.NewWriter(body)
+			_, err := writer.CreateFormFile("file", "app.go")
+			if err != nil {
+				AbortSuite("failed create file mock: " + err.Error())
+			}
+			writer.Close()
+
+			r, _ = http.NewRequest(http.MethodPost, "/v1/file", body)
+			r.Header.Add("Content-Type", writer.FormDataContentType())
+
+			log = mock.NewMockLogger(ctrl)
+			serializer = serialization.NewJsonSerializer()
+			uploadService = mock.NewMockUploader(ctrl)
+			locator = mock.NewMockUploadLocation(ctrl)
+			cfg := &rest_app.RestAppConfig{}
+			handler = rest_app.NewUploadFileHandler(
+				log, serializer, uploadService,
+				locator, cfg,
+			)
+		})
+
+		When("failed parse form file", func() {
+			It("should return error", func() {
+				log.
+					EXPECT().
+					Debug("In function: UploadFileHandler").
+					Times(1)
+				log.
+					EXPECT().
+					Debug("Returning function: UploadFileHandler").
+					Times(1)
+
+				r, _ := http.NewRequest(http.MethodPost, "/v1/file", nil)
+				w := httptest.NewRecorder()
+
+				handler.ServeHTTP(w, r)
+
+				resBody := rest_app.ResponseBody{}
+				serializer.Decode(w.Body.Bytes(), &resBody)
+
+				Expect(w.Code).To(Equal(400))
+				Expect(resBody.Code).To(Equal("ERROR"))
+				Expect(resBody.Message).To(Equal("request Content-Type isn't multipart/form-data"))
+				Expect(resBody.Data).To(BeNil())
+			})
+		})
+
+		When("failed upload file", func() {
+			It("should return error", func() {
+				log.
+					EXPECT().
+					Debug("In function: UploadFileHandler").
+					Times(1)
+				log.
+					EXPECT().
+					Debug("Returning function: UploadFileHandler").
+					Times(1)
+
+				locator.
+					EXPECT().
+					GetLocation().
+					Return("mock/location").
+					Times(1)
+
+				uploadService.
+					EXPECT().
+					UploadFile(gomock.Eq(ctx), gomock.Any()).
+					Return(nil, fmt.Errorf("disk error")).
+					Times(1)
+
+				w := httptest.NewRecorder()
+
+				handler.ServeHTTP(w, r)
+
+				resBody := rest_app.ResponseBody{}
+				serializer.Decode(w.Body.Bytes(), &resBody)
+
+				Expect(w.Code).To(Equal(400))
+				Expect(resBody.Code).To(Equal("ERROR"))
+				Expect(resBody.Message).To(Equal("disk error"))
+				Expect(resBody.Data).To(BeNil())
+			})
+		})
+
+		When("success upload file", func() {
+			It("should return result", func() {
+				log.
+					EXPECT().
+					Debug("In function: UploadFileHandler").
+					Times(1)
+				log.
+					EXPECT().
+					Debug("Returning function: UploadFileHandler").
+					Times(1)
+
+				locator.
+					EXPECT().
+					GetLocation().
+					Return("mock/location").
+					Times(1)
+
+				uploadRes := &uploading.UploadFileResult{
+					UniqueId:   "mock-unique-id",
+					Name:       "dolpin.jpg",
+					Path:       "mock/location/mock-unique-id.jpg",
+					Mimetype:   "image/jpeg",
+					Extension:  "jpg",
+					Size:       200,
+					UploadedAt: currentTimestamp,
+				}
+				uploadService.
+					EXPECT().
+					UploadFile(gomock.Eq(ctx), gomock.Any()).
+					Return(uploadRes, nil).
+					Times(1)
+
+				w := httptest.NewRecorder()
+
+				handler.ServeHTTP(w, r)
+
+				resBody := rest_app.ResponseBody{}
+				serializer.Decode(w.Body.Bytes(), &resBody)
+				data := map[string]interface{}{
+					"id":          uploadRes.UniqueId,
+					"name":        uploadRes.Name,
+					"mimetype":    uploadRes.Mimetype,
+					"extension":   uploadRes.Extension,
+					"size":        float64(200),
+					"uploaded_at": float64(uploadRes.UploadedAt.UnixMilli()),
+				}
+
+				Expect(w.Code).To(Equal(200))
+				Expect(resBody.Code).To(Equal("SUCCESS"))
+				Expect(resBody.Message).To(Equal("success upload file"))
+				Expect(resBody.Data).To(Equal(data))
 			})
 		})
 	})
