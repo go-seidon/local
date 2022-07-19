@@ -2,6 +2,7 @@ package rest_app_test
 
 import (
 	"fmt"
+	"io"
 	"mime/multipart"
 
 	"github.com/go-seidon/local/internal/mock"
@@ -135,6 +136,28 @@ var _ = Describe("Multipart Package", func() {
 
 				Expect(res).To(BeNil())
 				Expect(err).To(Equal(fmt.Errorf("disk error")))
+			})
+		})
+
+		When("reach end of file", func() {
+			It("should return result", func() {
+				buff := make([]byte, 512)
+				f.
+					EXPECT().
+					Read(gomock.Eq(buff)).
+					Return(200, io.EOF).
+					Times(1)
+
+				res, err := rest_app.ParseMultipartFile(f, fh)
+
+				expectedRes := &rest_app.FileInfo{
+					Name:      "dolpin",
+					Extension: "jpeg",
+					Size:      200,
+					Mimetype:  "application/octet-stream",
+				}
+				Expect(res).To(Equal(expectedRes))
+				Expect(err).To(BeNil())
 			})
 		})
 
