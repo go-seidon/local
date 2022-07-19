@@ -7,12 +7,12 @@
 No doc right now
 
 ## Todo
-1. Change `file.id` to varchar and remove `file.unique_id` (id should be geenrated by the client app)
-2. Refactor `NewResponseBody` following `http.Error()` approach
-3. Basic authentication
-4. Change handler response struct into anonymouse struct
-5. Change NewDailyRotate using optional param
-6. NewRootHandler receive RestAppConfig
+1. Change NewRootHandler receive RestAppConfig
+2. Change handler response struct into anonymouse struct
+3. Change NewDailyRotate using optional param
+4. Change `NewResponseBody` following `http.Error()` approach
+5. Revamp `file.id` to varchar and remove `file.unique_id` (id should be geenrated by the client app)
+6. Add Basic authentication
 
 ## Nice to have
 1. Separate findFile query in DeleteFile and RetrieveFile
