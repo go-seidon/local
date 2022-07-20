@@ -56,15 +56,15 @@ type RootResult struct {
 	AppVersion string `json:"app_version"`
 }
 
-func NewRootHandler(log logging.Logger, serializer serialization.Serializer, appName, appVersion string) http.HandlerFunc {
+func NewRootHandler(log logging.Logger, serializer serialization.Serializer, config *RestAppConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.Debug("In function: RootHandler")
 		defer log.Debug("Returning function: RootHandler")
 
 		b := NewResponseBody(&NewResponseBodyParam{
 			Data: &RootResult{
-				AppName:    appName,
-				AppVersion: appVersion,
+				AppName:    config.AppName,
+				AppVersion: config.AppVersion,
 			},
 		})
 		res, _ := serializer.Encode(b)

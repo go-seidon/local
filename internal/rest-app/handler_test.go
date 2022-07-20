@@ -167,7 +167,11 @@ var _ = Describe("Handler Package", func() {
 			w = mock.NewMockResponseWriter(ctrl)
 			log = mock.NewMockLogger(ctrl)
 			serializer = mock.NewMockSerializer(ctrl)
-			handler = rest_app.NewRootHandler(log, serializer, "mock-name", "mock-version")
+			cfg := &rest_app.RestAppConfig{
+				AppName:    "mock-name",
+				AppVersion: "mock-version",
+			}
+			handler = rest_app.NewRootHandler(log, serializer, cfg)
 		})
 
 		When("success call the function", func() {

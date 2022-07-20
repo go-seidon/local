@@ -7,7 +7,6 @@
 No doc right now
 
 ## Todo
-1. Change NewRootHandler receive RestAppConfig
 2. Change handler response struct into anonymouse struct
 3. Change NewDailyRotate using optional param
 4. Change `NewResponseBody` following `http.Error()` approach
