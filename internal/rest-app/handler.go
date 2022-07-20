@@ -17,134 +17,107 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func NewNotFoundHandler(log logging.Logger, serializer serialization.Serializer) http.HandlerFunc {
+func NewNotFoundHandler(log logging.Logger, s serialization.Serializer) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.Debug("In function: NotFoundHandler")
 		defer log.Debug("Returning function: NotFoundHandler")
 
-		b := NewResponseBody(&NewResponseBodyParam{
-			Code:    CODE_NOT_FOUND,
-			Message: "resource not found",
-		})
-		res, _ := serializer.Encode(b)
-
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		w.Write(res)
+		Response(WithWriterSerializer(w, s), NotFound("resource not found"))
 	}
 }
 
-func NewMethodNotAllowedHandler(log logging.Logger, serializer serialization.Serializer) http.HandlerFunc {
+func NewMethodNotAllowedHandler(log logging.Logger, s serialization.Serializer) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.Debug("In function: MethodNotAllowedHandler")
 		defer log.Debug("Returning function: MethodNotAllowedHandler")
 
-		b := NewResponseBody(&NewResponseBodyParam{
-			Code:    CODE_ERROR,
-			Message: "method is not allowed",
-		})
-		res, _ := serializer.Encode(b)
-
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Write(res)
+		Response(
+			WithWriterSerializer(w, s),
+			WithHttpCode(http.StatusMethodNotAllowed),
+			Error("method is not allowed"),
+		)
 	}
 }
 
-func NewRootHandler(log logging.Logger, serializer serialization.Serializer, config *RestAppConfig) http.HandlerFunc {
+func NewRootHandler(log logging.Logger, s serialization.Serializer, config *RestAppConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.Debug("In function: RootHandler")
 		defer log.Debug("Returning function: RootHandler")
 
-		b := NewResponseBody(&NewResponseBodyParam{
-			Data: struct {
-				AppName    string `json:"app_name"`
-				AppVersion string `json:"app_version"`
-			}{
-				AppName:    config.AppName,
-				AppVersion: config.AppVersion,
-			},
-		})
-		res, _ := serializer.Encode(b)
-
-		w.WriteHeader(http.StatusOK)
-		w.Write(res)
+		d := struct {
+			AppName    string `json:"app_name"`
+			AppVersion string `json:"app_version"`
+		}{
+			AppName:    config.AppName,
+			AppVersion: config.AppVersion,
+		}
+		Response(WithWriterSerializer(w, s), Success(d))
 	}
 }
 
-func NewHealthCheckHandler(log logging.Logger, serializer serialization.Serializer, healthService healthcheck.HealthCheck) http.HandlerFunc {
+func NewHealthCheckHandler(log logging.Logger, s serialization.Serializer, healthService healthcheck.HealthCheck) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.Debug("In function: HealthCheckHandler")
 		defer log.Debug("Returning function: HealthCheckHandler")
 
-		var res []byte
-		var b ResponseBody
-
 		r, err := healthService.Check()
 		if err != nil {
-			b = NewResponseBody(&NewResponseBodyParam{
-				Code:    CODE_ERROR,
-				Message: err.Error(),
-			})
 
-			w.WriteHeader(http.StatusBadRequest)
-		} else {
-			jobs := map[string]struct {
+			Response(WithWriterSerializer(w, s), Error(err.Error()))
+			return
+		}
+
+		jobs := map[string]struct {
+			Name      string      `json:"name"`
+			Status    string      `json:"status"`
+			CheckedAt time.Time   `json:"checked_at"`
+			Error     string      `json:"error"`
+			Metadata  interface{} `json:"metadata"`
+		}{}
+		for jobName, item := range r.Items {
+			jobs[jobName] = struct {
 				Name      string      `json:"name"`
 				Status    string      `json:"status"`
 				CheckedAt time.Time   `json:"checked_at"`
 				Error     string      `json:"error"`
 				Metadata  interface{} `json:"metadata"`
-			}{}
-			for jobName, item := range r.Items {
-				jobs[jobName] = struct {
-					Name      string      `json:"name"`
-					Status    string      `json:"status"`
-					CheckedAt time.Time   `json:"checked_at"`
-					Error     string      `json:"error"`
-					Metadata  interface{} `json:"metadata"`
-				}{
-					Name:      item.Name,
-					Status:    item.Status,
-					Error:     item.Error,
-					Metadata:  item.Metadata,
-					CheckedAt: item.CheckedAt,
-				}
+			}{
+				Name:      item.Name,
+				Status:    item.Status,
+				Error:     item.Error,
+				Metadata:  item.Metadata,
+				CheckedAt: item.CheckedAt,
 			}
-
-			b = NewResponseBody(&NewResponseBodyParam{
-				Data: struct {
-					Status  string `json:"status"`
-					Details map[string]struct {
-						Name      string      `json:"name"`
-						Status    string      `json:"status"`
-						CheckedAt time.Time   `json:"checked_at"`
-						Error     string      `json:"error"`
-						Metadata  interface{} `json:"metadata"`
-					} `json:"details"`
-				}{
-					Status:  r.Status,
-					Details: jobs,
-				},
-				Message: "success check service health",
-			})
-
-			w.WriteHeader(http.StatusOK)
 		}
 
-		res, _ = serializer.Encode(b)
+		d := struct {
+			Status  string `json:"status"`
+			Details map[string]struct {
+				Name      string      `json:"name"`
+				Status    string      `json:"status"`
+				CheckedAt time.Time   `json:"checked_at"`
+				Error     string      `json:"error"`
+				Metadata  interface{} `json:"metadata"`
+			} `json:"details"`
+		}{
+			Status:  r.Status,
+			Details: jobs,
+		}
 
-		w.Write(res)
+		Response(
+			WithWriterSerializer(w, s),
+			Success(d),
+			WithMessage("success check service health"),
+		)
 	}
 }
 
-func NewDeleteFileHandler(log logging.Logger, serializer serialization.Serializer, deleter deleting.Deleter) http.HandlerFunc {
+func NewDeleteFileHandler(log logging.Logger, s serialization.Serializer, deleter deleting.Deleter) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.Debug("In function: DeleteFileHandler")
 		defer log.Debug("Returning function: DeleteFileHandler")
-
-		var res []byte
-		var b ResponseBody
 
 		vars := mux.Vars(req)
 
@@ -153,50 +126,34 @@ func NewDeleteFileHandler(log logging.Logger, serializer serialization.Serialize
 			FileId: vars["unique_id"],
 		})
 		if err == nil {
-			b = NewResponseBody(&NewResponseBodyParam{
-				Data: struct {
-					DeletedAt int64 `json:"deleted_at"`
-				}{
-					DeletedAt: r.DeletedAt.UnixMilli(),
-				},
-				Message: "success delete file",
-			})
 
-			res, _ = serializer.Encode(b)
-			w.WriteHeader(http.StatusOK)
-			w.Write(res)
+			d := struct {
+				DeletedAt int64 `json:"deleted_at"`
+			}{
+				DeletedAt: r.DeletedAt.UnixMilli(),
+			}
 
+			Response(
+				WithWriterSerializer(w, s),
+				Success(d),
+				WithMessage("success delete file"),
+			)
 			return
 		}
 
 		if errors.Is(err, deleting.ErrorResourceNotFound) {
-			b = NewResponseBody(&NewResponseBodyParam{
-				Code:    CODE_NOT_FOUND,
-				Message: err.Error(),
-			})
-
-			w.WriteHeader(http.StatusNotFound)
-		} else {
-			b = NewResponseBody(&NewResponseBodyParam{
-				Code:    CODE_ERROR,
-				Message: err.Error(),
-			})
-
-			w.WriteHeader(http.StatusBadRequest)
+			Response(WithWriterSerializer(w, s), NotFound(err.Error()))
+			return
 		}
 
-		res, _ = serializer.Encode(b)
-		w.Write(res)
+		Response(WithWriterSerializer(w, s), Error(err.Error()))
 	}
 }
 
-func NewRetrieveFileHandler(log logging.Logger, serializer serialization.Serializer, retriever retrieving.Retriever) http.HandlerFunc {
+func NewRetrieveFileHandler(log logging.Logger, s serialization.Serializer, retriever retrieving.Retriever) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.Debug("In function: RetrieveFileHandler")
 		defer log.Debug("Returning function: RetrieveFileHandler")
-
-		var res []byte
-		var b ResponseBody
 
 		vars := mux.Vars(req)
 
@@ -209,14 +166,7 @@ func NewRetrieveFileHandler(log logging.Logger, serializer serialization.Seriali
 			defer r.Data.Close()
 			data, err := io.ReadAll(r.Data)
 			if err != nil {
-				b = NewResponseBody(&NewResponseBodyParam{
-					Code:    CODE_ERROR,
-					Message: err.Error(),
-				})
-				res, _ = serializer.Encode(b)
-
-				w.WriteHeader(http.StatusBadRequest)
-				w.Write(res)
+				Response(WithWriterSerializer(w, s), Error(err.Error()))
 				return
 			}
 
@@ -231,27 +181,15 @@ func NewRetrieveFileHandler(log logging.Logger, serializer serialization.Seriali
 		}
 
 		if errors.Is(err, retrieving.ErrorResourceNotFound) {
-			b = NewResponseBody(&NewResponseBodyParam{
-				Code:    CODE_NOT_FOUND,
-				Message: err.Error(),
-			})
-
-			w.WriteHeader(http.StatusNotFound)
-		} else {
-			b = NewResponseBody(&NewResponseBodyParam{
-				Code:    CODE_ERROR,
-				Message: err.Error(),
-			})
-
-			w.WriteHeader(http.StatusBadRequest)
+			Response(WithWriterSerializer(w, s), NotFound(err.Error()))
+			return
 		}
 
-		res, _ = serializer.Encode(b)
-		w.Write(res)
+		Response(WithWriterSerializer(w, s), Error(err.Error()))
 	}
 }
 
-func NewUploadFileHandler(log logging.Logger, serializer serialization.Serializer, uploader uploading.Uploader, locator uploading.UploadLocation, config *RestAppConfig) http.HandlerFunc {
+func NewUploadFileHandler(log logging.Logger, s serialization.Serializer, uploader uploading.Uploader, locator uploading.UploadLocation, config *RestAppConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.Debug("In function: UploadFileHandler")
 		defer log.Debug("Returning function: UploadFileHandler")
@@ -261,30 +199,14 @@ func NewUploadFileHandler(log logging.Logger, serializer serialization.Serialize
 
 		file, fileHeader, err := req.FormFile("file")
 		if err != nil {
-			b := NewResponseBody(&NewResponseBodyParam{
-				Code:    CODE_ERROR,
-				Message: err.Error(),
-			})
-
-			res, _ := serializer.Encode(b)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(res)
-
+			Response(WithWriterSerializer(w, s), Error(err.Error()))
 			return
 		}
 		defer file.Close()
 
 		fileInfo, err := ParseMultipartFile(file, fileHeader)
 		if err != nil {
-			b := NewResponseBody(&NewResponseBodyParam{
-				Code:    CODE_ERROR,
-				Message: err.Error(),
-			})
-
-			res, _ := serializer.Encode(b)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(res)
-
+			Response(WithWriterSerializer(w, s), Error(err.Error()))
 			return
 		}
 
@@ -302,39 +224,30 @@ func NewUploadFileHandler(log logging.Logger, serializer serialization.Serialize
 			),
 		)
 		if err != nil {
-			b := NewResponseBody(&NewResponseBodyParam{
-				Code:    CODE_ERROR,
-				Message: err.Error(),
-			})
-
-			res, _ := serializer.Encode(b)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(res)
-
+			Response(WithWriterSerializer(w, s), Error(err.Error()))
 			return
 		}
 
-		b := NewResponseBody(&NewResponseBodyParam{
-			Data: struct {
-				UniqueId   string `json:"id"`
-				Name       string `json:"name"`
-				Mimetype   string `json:"mimetype"`
-				Extension  string `json:"extension"`
-				Size       int64  `json:"size"`
-				UploadedAt int64  `json:"uploaded_at"`
-			}{
-				UniqueId:   uploadRes.UniqueId,
-				Name:       uploadRes.Name,
-				Mimetype:   uploadRes.Mimetype,
-				Extension:  uploadRes.Extension,
-				Size:       uploadRes.Size,
-				UploadedAt: uploadRes.UploadedAt.UnixMilli(),
-			},
-			Message: "success upload file",
-		})
+		d := struct {
+			UniqueId   string `json:"id"`
+			Name       string `json:"name"`
+			Mimetype   string `json:"mimetype"`
+			Extension  string `json:"extension"`
+			Size       int64  `json:"size"`
+			UploadedAt int64  `json:"uploaded_at"`
+		}{
+			UniqueId:   uploadRes.UniqueId,
+			Name:       uploadRes.Name,
+			Mimetype:   uploadRes.Mimetype,
+			Extension:  uploadRes.Extension,
+			Size:       uploadRes.Size,
+			UploadedAt: uploadRes.UploadedAt.UnixMilli(),
+		}
 
-		res, _ := serializer.Encode(b)
-		w.WriteHeader(http.StatusOK)
-		w.Write(res)
+		Response(
+			WithWriterSerializer(w, s),
+			Success(d),
+			WithMessage("success upload file"),
+		)
 	}
 }
