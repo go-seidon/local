@@ -7,12 +7,8 @@
 No doc right now
 
 ## Todo
-1. Change NewRootHandler receive RestAppConfig
-2. Change handler response struct into anonymouse struct
-3. Change NewDailyRotate using optional param
-4. Change `NewResponseBody` following `http.Error()` approach
-5. Revamp `file.id` to varchar and remove `file.unique_id` (id should be geenrated by the client app)
-6. Add Basic authentication
+1. Revamp `file.id` to varchar and remove `file.unique_id` (id should be geenrated by the client app)
+2. Add Basic authentication
 
 ## Nice to have
 1. Separate findFile query in DeleteFile and RetrieveFile
@@ -20,6 +16,7 @@ No doc right now
 3. Store directory checking result in memory when uploading file to reduce r/w to the disk (dirManager)
 4. File setting: (visibility, upload location default to daily rotator)
 5. Access file using custom link with certain limitation such as access duration, attribute user_id, etc
+6. Change NewDailyRotate using optional param
 
 ## Technical Stack
 1. Transport layer

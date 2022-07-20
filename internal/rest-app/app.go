@@ -168,7 +168,7 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 	router.Use(DefaultHeaderMiddleware)
 	router.HandleFunc(
 		"/",
-		NewRootHandler(logger, serializer, option.Config.AppName, option.Config.AppVersion),
+		NewRootHandler(logger, serializer, raCfg),
 	)
 	router.HandleFunc(
 		"/health",

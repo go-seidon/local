@@ -167,7 +167,11 @@ var _ = Describe("Handler Package", func() {
 			w = mock.NewMockResponseWriter(ctrl)
 			log = mock.NewMockLogger(ctrl)
 			serializer = mock.NewMockSerializer(ctrl)
-			handler = rest_app.NewRootHandler(log, serializer, "mock-name", "mock-version")
+			cfg := &rest_app.RestAppConfig{
+				AppName:    "mock-name",
+				AppVersion: "mock-version",
+			}
+			handler = rest_app.NewRootHandler(log, serializer, cfg)
 		})
 
 		When("success call the function", func() {
@@ -176,7 +180,10 @@ var _ = Describe("Handler Package", func() {
 				b := rest_app.ResponseBody{
 					Code:    "SUCCESS",
 					Message: "success",
-					Data: &rest_app.RootResult{
+					Data: struct {
+						AppName    string `json:"app_name"`
+						AppVersion string `json:"app_version"`
+					}{
 						AppName:    "mock-name",
 						AppVersion: "mock-version",
 					},
@@ -300,7 +307,13 @@ var _ = Describe("Handler Package", func() {
 						},
 					},
 				}
-				jobs := map[string]rest_app.HealthCheckItem{
+				jobs := map[string]struct {
+					Name      string      `json:"name"`
+					Status    string      `json:"status"`
+					CheckedAt time.Time   `json:"checked_at"`
+					Error     string      `json:"error"`
+					Metadata  interface{} `json:"metadata"`
+				}{
 					"app-disk": {
 						Name:      "app-disk",
 						Status:    "FAILED",
@@ -318,7 +331,16 @@ var _ = Describe("Handler Package", func() {
 				}
 
 				b := rest_app.ResponseBody{
-					Data: &rest_app.HealthCheckResponse{
+					Data: struct {
+						Status  string `json:"status"`
+						Details map[string]struct {
+							Name      string      `json:"name"`
+							Status    string      `json:"status"`
+							CheckedAt time.Time   `json:"checked_at"`
+							Error     string      `json:"error"`
+							Metadata  interface{} `json:"metadata"`
+						} `json:"details"`
+					}{
 						Status:  "WARNING",
 						Details: jobs,
 					},
@@ -486,7 +508,9 @@ var _ = Describe("Handler Package", func() {
 				b := rest_app.ResponseBody{
 					Code:    "SUCCESS",
 					Message: "success delete file",
-					Data: &rest_app.DeleteFileResponse{
+					Data: struct {
+						DeletedAt int64 `json:"deleted_at"`
+					}{
 						DeletedAt: res.DeletedAt.UnixMilli(),
 					},
 				}

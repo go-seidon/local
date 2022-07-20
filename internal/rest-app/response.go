@@ -1,5 +1,12 @@
 package rest_app
 
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/go-seidon/local/internal/serialization"
+)
+
 const (
 	CODE_SUCCESS   = "SUCCESS"
 	CODE_ERROR     = "ERROR"
@@ -12,28 +19,114 @@ type ResponseBody struct {
 	Data    interface{} `json:"data"`
 }
 
-type NewResponseBodyParam struct {
-	Code    string
-	Message string
-	Data    interface{}
+type ResponseParam struct {
+	Writer     http.ResponseWriter
+	Serializer serialization.Serializer
+
+	Body            ResponseBody
+	defaultHttpCode int
+	HttpCode        int
+	Message         string
 }
 
-func NewResponseBody(p *NewResponseBodyParam) ResponseBody {
-	r := ResponseBody{
-		Message: "success",
-		Code:    CODE_SUCCESS,
+type ResponseOption = func(*ResponseParam)
+
+func WithWriterSerializer(w http.ResponseWriter, s serialization.Serializer) ResponseOption {
+	return func(rp *ResponseParam) {
+		rp.Writer = w
+		rp.Serializer = s
 	}
-	if p == nil {
-		return r
+}
+
+func WithHttpCode(c int) ResponseOption {
+	return func(rp *ResponseParam) {
+		rp.HttpCode = c
 	}
-	if p.Code != "" {
-		r.Code = p.Code
+}
+
+func WithMessage(m string) ResponseOption {
+	return func(rp *ResponseParam) {
+		rp.Message = m
 	}
+}
+
+func Success(d interface{}) ResponseOption {
+	return func(rp *ResponseParam) {
+		b := ResponseBody{
+			Message: "success",
+			Code:    CODE_SUCCESS,
+			Data:    d,
+		}
+
+		rp.Body = b
+		rp.defaultHttpCode = http.StatusOK
+	}
+}
+
+func Error(message string) ResponseOption {
+	return func(rp *ResponseParam) {
+		b := ResponseBody{
+			Message: "error",
+			Code:    CODE_ERROR,
+		}
+		if message != "" {
+			b.Message = message
+		}
+
+		rp.Body = b
+		rp.defaultHttpCode = http.StatusBadRequest
+	}
+}
+
+func NotFound(message string) ResponseOption {
+	return func(rp *ResponseParam) {
+		b := ResponseBody{
+			Message: "not found",
+			Code:    CODE_NOT_FOUND,
+		}
+		if message != "" {
+			b.Message = message
+		}
+
+		rp.Body = b
+		rp.defaultHttpCode = http.StatusNotFound
+	}
+}
+
+func Response(opts ...ResponseOption) error {
+	p := ResponseParam{
+		Body: ResponseBody{
+			Code:    CODE_SUCCESS,
+			Message: "success",
+		},
+		defaultHttpCode: http.StatusOK,
+	}
+	for _, opt := range opts {
+		opt(&p)
+	}
+
+	if p.Writer == nil {
+		return fmt.Errorf("writer should be specified")
+	}
+	if p.Serializer == nil {
+		return fmt.Errorf("serializer should be specified")
+	}
+
+	httpCode := p.defaultHttpCode
+	if p.HttpCode != 0 {
+		httpCode = p.HttpCode
+	}
+
 	if p.Message != "" {
-		r.Message = p.Message
+		p.Body.Message = p.Message
 	}
-	if p.Data != nil {
-		r.Data = p.Data
+
+	r, err := p.Serializer.Encode(p.Body)
+	if err != nil {
+		return err
 	}
-	return r
+
+	p.Writer.WriteHeader(httpCode)
+	p.Writer.Write(r)
+	return nil
 }
