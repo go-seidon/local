@@ -51,18 +51,16 @@ func NewMethodNotAllowedHandler(log logging.Logger, serializer serialization.Ser
 	}
 }
 
-type RootResult struct {
-	AppName    string `json:"app_name"`
-	AppVersion string `json:"app_version"`
-}
-
 func NewRootHandler(log logging.Logger, serializer serialization.Serializer, config *RestAppConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.Debug("In function: RootHandler")
 		defer log.Debug("Returning function: RootHandler")
 
 		b := NewResponseBody(&NewResponseBodyParam{
-			Data: &RootResult{
+			Data: struct {
+				AppName    string `json:"app_name"`
+				AppVersion string `json:"app_version"`
+			}{
 				AppName:    config.AppName,
 				AppVersion: config.AppVersion,
 			},
@@ -72,19 +70,6 @@ func NewRootHandler(log logging.Logger, serializer serialization.Serializer, con
 		w.WriteHeader(http.StatusOK)
 		w.Write(res)
 	}
-}
-
-type HealthCheckItem struct {
-	Name      string      `json:"name"`
-	Status    string      `json:"status"`
-	CheckedAt time.Time   `json:"checked_at"`
-	Error     string      `json:"error"`
-	Metadata  interface{} `json:"metadata"`
-}
-
-type HealthCheckResponse struct {
-	Status  string                     `json:"status"`
-	Details map[string]HealthCheckItem `json:"details"`
 }
 
 func NewHealthCheckHandler(log logging.Logger, serializer serialization.Serializer, healthService healthcheck.HealthCheck) http.HandlerFunc {
@@ -104,9 +89,21 @@ func NewHealthCheckHandler(log logging.Logger, serializer serialization.Serializ
 
 			w.WriteHeader(http.StatusBadRequest)
 		} else {
-			jobs := map[string]HealthCheckItem{}
+			jobs := map[string]struct {
+				Name      string      `json:"name"`
+				Status    string      `json:"status"`
+				CheckedAt time.Time   `json:"checked_at"`
+				Error     string      `json:"error"`
+				Metadata  interface{} `json:"metadata"`
+			}{}
 			for jobName, item := range r.Items {
-				jobs[jobName] = HealthCheckItem{
+				jobs[jobName] = struct {
+					Name      string      `json:"name"`
+					Status    string      `json:"status"`
+					CheckedAt time.Time   `json:"checked_at"`
+					Error     string      `json:"error"`
+					Metadata  interface{} `json:"metadata"`
+				}{
 					Name:      item.Name,
 					Status:    item.Status,
 					Error:     item.Error,
@@ -116,7 +113,16 @@ func NewHealthCheckHandler(log logging.Logger, serializer serialization.Serializ
 			}
 
 			b = NewResponseBody(&NewResponseBodyParam{
-				Data: &HealthCheckResponse{
+				Data: struct {
+					Status  string `json:"status"`
+					Details map[string]struct {
+						Name      string      `json:"name"`
+						Status    string      `json:"status"`
+						CheckedAt time.Time   `json:"checked_at"`
+						Error     string      `json:"error"`
+						Metadata  interface{} `json:"metadata"`
+					} `json:"details"`
+				}{
 					Status:  r.Status,
 					Details: jobs,
 				},
@@ -130,10 +136,6 @@ func NewHealthCheckHandler(log logging.Logger, serializer serialization.Serializ
 
 		w.Write(res)
 	}
-}
-
-type DeleteFileResponse struct {
-	DeletedAt int64 `json:"deleted_at"`
 }
 
 func NewDeleteFileHandler(log logging.Logger, serializer serialization.Serializer, deleter deleting.Deleter) http.HandlerFunc {
@@ -152,7 +154,9 @@ func NewDeleteFileHandler(log logging.Logger, serializer serialization.Serialize
 		})
 		if err == nil {
 			b = NewResponseBody(&NewResponseBodyParam{
-				Data: &DeleteFileResponse{
+				Data: struct {
+					DeletedAt int64 `json:"deleted_at"`
+				}{
 					DeletedAt: r.DeletedAt.UnixMilli(),
 				},
 				Message: "success delete file",
