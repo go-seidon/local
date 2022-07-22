@@ -123,7 +123,7 @@ func NewDeleteFileHandler(log logging.Logger, s serialization.Serializer, delete
 
 		ctx := context.Background()
 		r, err := deleter.DeleteFile(ctx, deleting.DeleteFileParam{
-			FileId: vars["unique_id"],
+			FileId: vars["id"],
 		})
 		if err == nil {
 
@@ -159,7 +159,7 @@ func NewRetrieveFileHandler(log logging.Logger, s serialization.Serializer, retr
 
 		ctx := context.Background()
 		r, err := retriever.RetrieveFile(ctx, retrieving.RetrieveFileParam{
-			FileId: vars["unique_id"],
+			FileId: vars["id"],
 		})
 		if err == nil {
 

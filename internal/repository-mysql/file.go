@@ -50,7 +50,7 @@ func (r *FileRepository) DeleteFile(ctx context.Context, p repository.DeleteFile
 	deleteQuery := `
 		UPDATE file 
 		SET deleted_at = ?
-		WHERE unique_id = ?
+		WHERE id = ?
 	`
 	qRes, err := tx.Exec(
 		deleteQuery,
@@ -129,7 +129,7 @@ func (r *FileRepository) CreateFile(ctx context.Context, p repository.CreateFile
 
 	insertQuery := `
 		INSERT INTO file (
-			unique_id, name, path, 
+			id, name, path, 
 			mimetype, extension, size, 
 			created_at, updated_at
 		) 
@@ -191,11 +191,11 @@ func (r *FileRepository) findFile(ctx context.Context, p findFileParam) (*findFi
 
 	sqlQuery := `
 		SELECT 
-			unique_id, name, path,
+			id, name, path,
 			mimetype, extension, size,
 			created_at, updated_at, deleted_at
 		FROM file
-		WHERE unique_id = ?
+		WHERE id = ?
 	`
 	if p.ShouldLock {
 		sqlQuery += ` FOR UPDATE `

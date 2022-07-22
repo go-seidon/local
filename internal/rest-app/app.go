@@ -175,11 +175,11 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 		NewHealthCheckHandler(logger, serializer, healthService),
 	).Methods(http.MethodGet)
 	router.HandleFunc(
-		"/file/{unique_id}",
+		"/file/{id}",
 		NewDeleteFileHandler(logger, serializer, deleteService),
 	).Methods(http.MethodDelete)
 	router.HandleFunc(
-		"/file/{unique_id}",
+		"/file/{id}",
 		NewRetrieveFileHandler(logger, serializer, retrieveService),
 	).Methods(http.MethodGet)
 	router.HandleFunc(
