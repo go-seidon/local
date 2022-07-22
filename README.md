@@ -7,8 +7,17 @@
 No doc right now
 
 ## Todo
-1. Revamp `file.id` to varchar and remove `file.unique_id` (id should be geenrated by the client app)
-2. Add Basic authentication
+1. Add Basic authentication
+2. Add verbose logging:
+```json
+{
+  "correlation_id": "",
+  "ip_address": "",
+  "received_at": "",
+  "execution_time": "",
+  "call_stack": "",
+}
+```
 
 ## Nice to have
 1. Separate findFile query in DeleteFile and RetrieveFile
