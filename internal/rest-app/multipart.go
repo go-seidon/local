@@ -18,7 +18,7 @@ type FileInfo struct {
 	@description: parse a given file and return file info
 	@referrence: https://gist.github.com/rayrutjes/db9b9ea8e02255d62ce2?permalink_comment_id=3418419#gistcomment-3418419
 */
-func ParseMultipartFile(file io.Reader, fh *multipart.FileHeader) (*FileInfo, error) {
+func ParseMultipartFile(file io.ReadSeeker, fh *multipart.FileHeader) (*FileInfo, error) {
 	info := &FileInfo{Size: fh.Size}
 	info.Name = ParseFileName(fh)
 	info.Extension = ParseFileExtension(fh)
@@ -31,6 +31,11 @@ func ParseMultipartFile(file io.Reader, fh *multipart.FileHeader) (*FileInfo, er
 	buff = buff[:n]
 
 	info.Mimetype = http.DetectContentType(buff)
+
+	_, err = file.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
 
 	return info, nil
 }

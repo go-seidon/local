@@ -97,19 +97,19 @@ var _ = Describe("File Repository", func() {
 			}
 			findFileQuery = regexp.QuoteMeta(`
 				SELECT 
-					unique_id, name, path,
+					id, name, path,
 					mimetype, extension, size,
 					created_at, updated_at, deleted_at
 				FROM file
-				WHERE unique_id = ?
+				WHERE id = ?
 			`)
 			deleteFileQuery = regexp.QuoteMeta(`
 				UPDATE file 
 				SET deleted_at = ?
-				WHERE unique_id = ?
+				WHERE id = ?
 			`)
 			fileRows = sqlmock.NewRows([]string{
-				"unique_id", "name", "path",
+				"id", "name", "path",
 				"mimetype", "extension", "size",
 				"created_at", "updated_at", "deleted_at",
 			}).AddRow(
@@ -142,7 +142,7 @@ var _ = Describe("File Repository", func() {
 			It("should return error", func() {
 				dbClient.ExpectBegin()
 				rows := sqlmock.NewRows([]string{
-					"unique_id", "name", "path",
+					"id", "name", "path",
 					"mimetype", "extension", "size",
 					"created_at", "updated_at", "deleted_at",
 				}).AddRow(
@@ -212,7 +212,7 @@ var _ = Describe("File Repository", func() {
 		When("failed rollback file is deleted", func() {
 			It("should return error", func() {
 				fileRows = sqlmock.NewRows([]string{
-					"unique_id", "name", "path",
+					"id", "name", "path",
 					"mimetype", "extension", "size",
 					"created_at", "updated_at", "deleted_at",
 				}).AddRow(
@@ -241,7 +241,7 @@ var _ = Describe("File Repository", func() {
 		When("file is deleted", func() {
 			It("should return error", func() {
 				fileRows = sqlmock.NewRows([]string{
-					"unique_id", "name", "path",
+					"id", "name", "path",
 					"mimetype", "extension", "size",
 					"created_at", "updated_at", "deleted_at",
 				}).AddRow(
@@ -539,14 +539,14 @@ var _ = Describe("File Repository", func() {
 			}
 			findFileQuery = regexp.QuoteMeta(`
 				SELECT 
-					unique_id, name, path,
+					id, name, path,
 					mimetype, extension, size,
 					created_at, updated_at, deleted_at
 				FROM file
-				WHERE unique_id = ?
+				WHERE id = ?
 			`)
 			fileRows = sqlmock.NewRows([]string{
-				"unique_id", "name", "path",
+				"id", "name", "path",
 				"mimetype", "extension", "size",
 				"created_at", "updated_at", "deleted_at",
 			}).AddRow(
@@ -565,7 +565,7 @@ var _ = Describe("File Repository", func() {
 		When("failed scan record", func() {
 			It("should return error", func() {
 				rows := sqlmock.NewRows([]string{
-					"unique_id", "name", "path",
+					"id", "name", "path",
 					"mimetype", "extension", "size",
 					"created_at", "updated_at", "deleted_at",
 				}).AddRow(
@@ -615,7 +615,7 @@ var _ = Describe("File Repository", func() {
 		When("file is deleted", func() {
 			It("should return error", func() {
 				fileRows = sqlmock.NewRows([]string{
-					"unique_id", "name", "path",
+					"id", "name", "path",
 					"mimetype", "extension", "size",
 					"created_at", "updated_at", "deleted_at",
 				}).AddRow(
@@ -704,7 +704,7 @@ var _ = Describe("File Repository", func() {
 			}
 			insertSqlQuery = regexp.QuoteMeta(`
 				INSERT INTO file (
-					unique_id, name, path, 
+					id, name, path, 
 					mimetype, extension, size, 
 					created_at, updated_at
 				) 

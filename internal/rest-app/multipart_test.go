@@ -109,14 +109,14 @@ var _ = Describe("Multipart Package", func() {
 
 	Context("ParseMultipartFile function", Label("unit"), func() {
 		var (
-			f  *mock.MockReader
+			f  *mock.MockReadSeeker
 			fh *multipart.FileHeader
 		)
 
 		BeforeEach(func() {
 			t := GinkgoT()
 			ctrl := gomock.NewController(t)
-			f = mock.NewMockReader(ctrl)
+			f = mock.NewMockReadSeeker(ctrl)
 			fh = &multipart.FileHeader{
 				Filename: "dolpin.jpeg",
 				Size:     200,
@@ -139,6 +139,28 @@ var _ = Describe("Multipart Package", func() {
 			})
 		})
 
+		When("failed seek to the end of file", func() {
+			It("should return error", func() {
+				buff := make([]byte, 512)
+				f.
+					EXPECT().
+					Read(gomock.Eq(buff)).
+					Return(512, nil).
+					Times(1)
+
+				f.
+					EXPECT().
+					Seek(gomock.Eq(int64(0)), gomock.Eq(0)).
+					Return(int64(0), fmt.Errorf("disk error")).
+					Times(1)
+
+				res, err := rest_app.ParseMultipartFile(f, fh)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(fmt.Errorf("disk error")))
+			})
+		})
+
 		When("reach end of file", func() {
 			It("should return result", func() {
 				buff := make([]byte, 512)
@@ -146,6 +168,12 @@ var _ = Describe("Multipart Package", func() {
 					EXPECT().
 					Read(gomock.Eq(buff)).
 					Return(200, io.EOF).
+					Times(1)
+
+				f.
+					EXPECT().
+					Seek(gomock.Eq(int64(0)), gomock.Eq(0)).
+					Return(int64(1), nil).
 					Times(1)
 
 				res, err := rest_app.ParseMultipartFile(f, fh)
@@ -168,6 +196,12 @@ var _ = Describe("Multipart Package", func() {
 					EXPECT().
 					Read(gomock.Eq(buff)).
 					Return(512, nil).
+					Times(1)
+
+				f.
+					EXPECT().
+					Seek(gomock.Eq(int64(0)), gomock.Eq(0)).
+					Return(int64(1), nil).
 					Times(1)
 
 				res, err := rest_app.ParseMultipartFile(f, fh)

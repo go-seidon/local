@@ -397,7 +397,7 @@ var _ = Describe("Handler Package", func() {
 		BeforeEach(func() {
 			t := GinkgoT()
 			r = mux.SetURLVars(&http.Request{}, map[string]string{
-				"unique_id": "mock-file-id",
+				"id": "mock-file-id",
 			})
 			ctrl := gomock.NewController(t)
 			w = mock.NewMockResponseWriter(ctrl)
@@ -568,7 +568,7 @@ var _ = Describe("Handler Package", func() {
 			t := GinkgoT()
 			ctx = context.Background()
 			r = mux.SetURLVars(&http.Request{}, map[string]string{
-				"unique_id": "mock-file-id",
+				"id": "mock-file-id",
 			})
 			ctrl := gomock.NewController(t)
 			w = mock.NewMockResponseWriter(ctrl)
