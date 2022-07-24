@@ -63,7 +63,7 @@ var _ = Describe("Handler Package", func() {
 
 				serializer.
 					EXPECT().
-					Encode(b).
+					Marshal(b).
 					Return([]byte{}, nil).
 					Times(1)
 
@@ -126,7 +126,7 @@ var _ = Describe("Handler Package", func() {
 
 				serializer.
 					EXPECT().
-					Encode(b).
+					Marshal(b).
 					Return([]byte{}, nil).
 					Times(1)
 
@@ -200,7 +200,7 @@ var _ = Describe("Handler Package", func() {
 
 				serializer.
 					EXPECT().
-					Encode(b).
+					Marshal(b).
 					Return([]byte{}, nil).
 					Times(1)
 
@@ -266,7 +266,7 @@ var _ = Describe("Handler Package", func() {
 
 				serializer.
 					EXPECT().
-					Encode(b).
+					Marshal(b).
 					Return([]byte{}, nil).
 					Times(1)
 
@@ -365,7 +365,7 @@ var _ = Describe("Handler Package", func() {
 
 				serializer.
 					EXPECT().
-					Encode(b).
+					Marshal(b).
 					Return([]byte{}, nil).
 					Times(1)
 
@@ -437,7 +437,7 @@ var _ = Describe("Handler Package", func() {
 
 				serializer.
 					EXPECT().
-					Encode(b).
+					Marshal(b).
 					Return([]byte{}, nil).
 					Times(1)
 
@@ -482,7 +482,7 @@ var _ = Describe("Handler Package", func() {
 
 				serializer.
 					EXPECT().
-					Encode(b).
+					Marshal(b).
 					Return([]byte{}, nil).
 					Times(1)
 
@@ -532,7 +532,7 @@ var _ = Describe("Handler Package", func() {
 
 				serializer.
 					EXPECT().
-					Encode(b).
+					Marshal(b).
 					Return([]byte{}, nil).
 					Times(1)
 
@@ -609,7 +609,7 @@ var _ = Describe("Handler Package", func() {
 
 				serializer.
 					EXPECT().
-					Encode(b).
+					Marshal(b).
 					Return([]byte{}, nil).
 					Times(1)
 
@@ -654,7 +654,7 @@ var _ = Describe("Handler Package", func() {
 
 				serializer.
 					EXPECT().
-					Encode(b).
+					Marshal(b).
 					Return([]byte{}, nil).
 					Times(1)
 
@@ -712,7 +712,7 @@ var _ = Describe("Handler Package", func() {
 
 				serializer.
 					EXPECT().
-					Encode(b).
+					Marshal(b).
 					Return([]byte{}, nil).
 					Times(1)
 
@@ -897,7 +897,7 @@ var _ = Describe("Handler Package", func() {
 				handler.ServeHTTP(w, r)
 
 				resBody := rest_app.ResponseBody{}
-				serializer.Decode(w.Body.Bytes(), &resBody)
+				serializer.Unmarshal(w.Body.Bytes(), &resBody)
 
 				Expect(w.Code).To(Equal(400))
 				Expect(resBody.Code).To(Equal("ERROR"))
@@ -934,7 +934,7 @@ var _ = Describe("Handler Package", func() {
 				handler.ServeHTTP(w, r)
 
 				resBody := rest_app.ResponseBody{}
-				serializer.Decode(w.Body.Bytes(), &resBody)
+				serializer.Unmarshal(w.Body.Bytes(), &resBody)
 
 				Expect(w.Code).To(Equal(400))
 				Expect(resBody.Code).To(Equal("ERROR"))
@@ -980,7 +980,7 @@ var _ = Describe("Handler Package", func() {
 				handler.ServeHTTP(w, r)
 
 				resBody := rest_app.ResponseBody{}
-				serializer.Decode(w.Body.Bytes(), &resBody)
+				serializer.Unmarshal(w.Body.Bytes(), &resBody)
 				data := map[string]interface{}{
 					"id":          uploadRes.UniqueId,
 					"name":        uploadRes.Name,
