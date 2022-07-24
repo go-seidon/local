@@ -9,7 +9,7 @@ import (
 )
 
 var _ = Describe("Json Serialization Package", func() {
-	Context("NewJsonSerializer function", func() {
+	Context("NewJsonSerializer function", Label("unit"), func() {
 		When("function is called", func() {
 			It("should return result", func() {
 				res := serialization.NewJsonSerializer()
@@ -19,7 +19,7 @@ var _ = Describe("Json Serialization Package", func() {
 		})
 	})
 
-	Context("Encode function", func() {
+	Context("Encode function", Label("unit"), func() {
 		var (
 			serializer serialization.Serializer
 		)
@@ -60,7 +60,7 @@ var _ = Describe("Json Serialization Package", func() {
 		})
 	})
 
-	Context("Decode function", func() {
+	Context("Decode function", Label("unit"), func() {
 		type Data struct {
 			Val string `json:"val"`
 		}
