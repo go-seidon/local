@@ -1,14 +1,14 @@
 package serialization
 
 type Serializer interface {
-	Encoder
-	Decoder
+	Marshaller
+	Unmarshaller
 }
 
-type Encoder interface {
-	Encode(i interface{}) ([]byte, error)
+type Marshaller interface {
+	Marshal(i interface{}) ([]byte, error)
 }
 
-type Decoder interface {
-	Decode(i []byte, o interface{}) error
+type Unmarshaller interface {
+	Unmarshal(i []byte, o interface{}) error
 }

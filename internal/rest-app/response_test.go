@@ -237,7 +237,7 @@ var _ = Describe("Response Package", func() {
 			It("should return nil", func() {
 				s.
 					EXPECT().
-					Encode(gomock.Any()).
+					Marshal(gomock.Any()).
 					Return([]byte("mock"), nil).
 					Times(1)
 
@@ -268,7 +268,7 @@ var _ = Describe("Response Package", func() {
 				}
 				s.
 					EXPECT().
-					Encode(gomock.Eq(b)).
+					Marshal(gomock.Eq(b)).
 					Return([]byte("mock"), nil).
 					Times(1)
 
@@ -295,7 +295,7 @@ var _ = Describe("Response Package", func() {
 			It("should return error", func() {
 				s.
 					EXPECT().
-					Encode(gomock.Any()).
+					Marshal(gomock.Any()).
 					Return(nil, fmt.Errorf("failed encode")).
 					Times(1)
 
@@ -311,7 +311,7 @@ var _ = Describe("Response Package", func() {
 			It("should return nil", func() {
 				s.
 					EXPECT().
-					Encode(gomock.Any()).
+					Marshal(gomock.Any()).
 					Return([]byte("mock"), nil).
 					Times(1)
 

@@ -6,7 +6,6 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"regexp"
-	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -18,11 +17,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
-
-func TestRepositoryMySQL(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Repository MySQL Package")
-}
 
 var _ = Describe("File Repository", func() {
 	Context("NewFileRepository function", Label("unit"), func() {

@@ -9,7 +9,7 @@ import (
 )
 
 var _ = Describe("Json Serialization Package", func() {
-	Context("NewJsonSerializer function", func() {
+	Context("NewJsonSerializer function", Label("unit"), func() {
 		When("function is called", func() {
 			It("should return result", func() {
 				res := serialization.NewJsonSerializer()
@@ -19,7 +19,7 @@ var _ = Describe("Json Serialization Package", func() {
 		})
 	})
 
-	Context("Encode function", func() {
+	Context("Marshal function", Label("unit"), func() {
 		var (
 			serializer serialization.Serializer
 		)
@@ -31,7 +31,7 @@ var _ = Describe("Json Serialization Package", func() {
 		When("success encode data", func() {
 			It("should return result", func() {
 				d := struct{}{}
-				res, err := serializer.Encode(d)
+				res, err := serializer.Marshal(d)
 
 				expected, _ := json.Marshal(d)
 				Expect(err).To(BeNil())
@@ -42,7 +42,7 @@ var _ = Describe("Json Serialization Package", func() {
 		When("failed encode data", func() {
 			It("should return error", func() {
 				d := make(chan int)
-				res, err := serializer.Encode(d)
+				res, err := serializer.Marshal(d)
 
 				Expect(err).ToNot(BeNil())
 				Expect(res).To(BeNil())
@@ -51,7 +51,7 @@ var _ = Describe("Json Serialization Package", func() {
 
 		When("data is nil", func() {
 			It("should return result", func() {
-				res, err := serializer.Encode(nil)
+				res, err := serializer.Marshal(nil)
 
 				expected, _ := json.Marshal(nil)
 				Expect(err).To(BeNil())
@@ -60,7 +60,7 @@ var _ = Describe("Json Serialization Package", func() {
 		})
 	})
 
-	Context("Decode function", func() {
+	Context("Unmarshal function", Label("unit"), func() {
 		type Data struct {
 			Val string `json:"val"`
 		}
@@ -78,7 +78,7 @@ var _ = Describe("Json Serialization Package", func() {
 		When("success decode data", func() {
 			It("should return result", func() {
 				var res Data
-				err := serializer.Decode(d, &res)
+				err := serializer.Unmarshal(d, &res)
 
 				Expect(err).To(BeNil())
 				Expect(res.Val).To(Equal("ok"))
@@ -89,7 +89,7 @@ var _ = Describe("Json Serialization Package", func() {
 			It("should return error", func() {
 				var res Data
 				d = []byte{}
-				err := serializer.Decode(d, &res)
+				err := serializer.Unmarshal(d, &res)
 
 				Expect(err).ToNot(BeNil())
 				Expect(res.Val).To(Equal(""))
@@ -99,7 +99,7 @@ var _ = Describe("Json Serialization Package", func() {
 		When("data is nil", func() {
 			It("should return result", func() {
 				var res Data
-				err := serializer.Decode(nil, &res)
+				err := serializer.Unmarshal(nil, &res)
 
 				Expect(err.Error()).To(Equal("unexpected end of JSON input"))
 				Expect(res.Val).To(Equal(""))

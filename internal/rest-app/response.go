@@ -121,7 +121,7 @@ func Response(opts ...ResponseOption) error {
 		p.Body.Message = p.Message
 	}
 
-	r, err := p.Serializer.Encode(p.Body)
+	r, err := p.Serializer.Marshal(p.Body)
 	if err != nil {
 		return err
 	}

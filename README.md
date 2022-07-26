@@ -7,7 +7,7 @@
 No doc right now
 
 ## Todo
-1. Add Basic authentication
+1. Add REST basic auth implementation
 2. Add verbose logging:
 ```json
 {
