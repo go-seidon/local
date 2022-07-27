@@ -47,8 +47,16 @@ func newMySQLRepository(p NewRepositoryOption) (*NewRepositoryResult, error) {
 		return nil, err
 	}
 
+	oauthRepo, err := repository_mysql.NewOAuthRepository(
+		repository_mysql.WithDbClient(client),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	r := &NewRepositoryResult{
-		FileRepo: fileRepo,
+		FileRepo:  fileRepo,
+		OAuthRepo: oauthRepo,
 	}
 	return r, nil
 }
@@ -68,7 +76,8 @@ type NewRepositoryOption struct {
 }
 
 type NewRepositoryResult struct {
-	FileRepo repository.FileRepository
+	FileRepo  repository.FileRepository
+	OAuthRepo repository.OAuthRepository
 }
 
 type mysqlRepositoryOption struct {

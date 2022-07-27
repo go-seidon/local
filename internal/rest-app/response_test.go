@@ -105,6 +105,27 @@ var _ = Describe("Response Package", func() {
 		})
 	})
 
+	Context("WithCode function", Label("unit"), func() {
+		var (
+			code string
+		)
+
+		BeforeEach(func() {
+			code = "SOME_ERROR"
+		})
+
+		When("code is specified", func() {
+			It("should set http", func() {
+				p := rest_app.ResponseParam{}
+				opt := rest_app.WithCode(code)
+
+				opt(&p)
+
+				Expect(p.Code).To(Equal(code))
+			})
+		})
+	})
+
 	Context("Success function", Label("unit"), func() {
 		var (
 			data interface{}

@@ -72,6 +72,7 @@ generate-mock:
 	mockgen -package=mock -source internal/retrieving/retriever.go -destination=internal/mock/retrieving_retriever_mock.go
 	mockgen -package=mock -source internal/uploading/uploader.go -destination=internal/mock/uploading_uploader_mock.go
 	mockgen -package=mock -source internal/uploading/location.go -destination=internal/mock/uploading_location_mock.go
+	mockgen -package=mock -source internal/auth/basic.go -destination=internal/mock/auth_basic_mock.go
 
 .PHONY: run-grpc-app
 run-grpc-app:
