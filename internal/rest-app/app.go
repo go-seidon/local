@@ -7,8 +7,11 @@ import (
 	"time"
 
 	"github.com/go-seidon/local/internal/app"
+	"github.com/go-seidon/local/internal/auth"
 	"github.com/go-seidon/local/internal/deleting"
+	"github.com/go-seidon/local/internal/encoding"
 	"github.com/go-seidon/local/internal/filesystem"
+	"github.com/go-seidon/local/internal/hashing"
 	"github.com/go-seidon/local/internal/healthcheck"
 	"github.com/go-seidon/local/internal/logging"
 	"github.com/go-seidon/local/internal/retrieving"
@@ -163,32 +166,49 @@ func NewRestApp(opts ...Option) (*RestApp, error) {
 	}
 	locator := uploading.NewDailyRotate(uploading.NewDailyRotateParam{})
 	serializer := serialization.NewJsonSerializer()
+	encoder := encoding.NewBase64Encoder()
+	hasher := hashing.NewBcryptHasher()
 
 	router := mux.NewRouter()
+	generalRouter := router.NewRoute().Subrouter()
+	fileRouter := router.NewRoute().Subrouter()
+
 	router.Use(DefaultHeaderMiddleware)
 	router.HandleFunc(
 		"/",
 		NewRootHandler(logger, serializer, raCfg),
 	)
-	router.HandleFunc(
+	generalRouter.HandleFunc(
 		"/health",
 		NewHealthCheckHandler(logger, serializer, healthService),
 	).Methods(http.MethodGet)
-	router.HandleFunc(
+	fileRouter.HandleFunc(
 		"/file/{id}",
 		NewDeleteFileHandler(logger, serializer, deleteService),
 	).Methods(http.MethodDelete)
-	router.HandleFunc(
+	fileRouter.HandleFunc(
 		"/file/{id}",
 		NewRetrieveFileHandler(logger, serializer, retrieveService),
 	).Methods(http.MethodGet)
-	router.HandleFunc(
+	fileRouter.HandleFunc(
 		"/file",
 		NewUploadFileHandler(logger, serializer, uploadService, locator, raCfg),
 	).Methods(http.MethodPost)
 
 	router.NotFoundHandler = NewNotFoundHandler(logger, serializer)
 	router.MethodNotAllowedHandler = NewMethodNotAllowedHandler(logger, serializer)
+
+	basicAuth, err := auth.NewBasicAuth(auth.NewBasicAuthParam{
+		Encoder:   encoder,
+		Hasher:    hasher,
+		OAuthRepo: repo.OAuthRepo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	basicAuthMiddleware := NewBasicAuthMiddleware(basicAuth, serializer)
+	generalRouter.Use(basicAuthMiddleware)
+	fileRouter.Use(basicAuthMiddleware)
 
 	server := option.Server
 	if option.Server == nil {
