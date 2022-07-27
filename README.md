@@ -7,8 +7,9 @@
 No doc right now
 
 ## Todo
-1. Add REST basic auth implementation
-2. Add verbose logging:
+1. Refactor `Response`, `Success`, `Error`, `Notfound`
+2. Lowercased and slugify `file.name`
+3. Add verbose logging:
 ```json
 {
   "correlation_id": "",
@@ -18,6 +19,7 @@ No doc right now
   "call_stack": "",
 }
 ```
+4. Separate db write and read
 
 ## Nice to have
 1. Separate findFile query in DeleteFile and RetrieveFile
@@ -26,6 +28,7 @@ No doc right now
 4. File setting: (visibility, upload location default to daily rotator)
 5. Access file using custom link with certain limitation such as access duration, attribute user_id, etc
 6. Change NewDailyRotate using optional param
+7. Resize image capability (?width=720&height=480)
 
 ## Technical Stack
 1. Transport layer
