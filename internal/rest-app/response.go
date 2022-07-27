@@ -8,9 +8,10 @@ import (
 )
 
 const (
-	CODE_SUCCESS   = "SUCCESS"
-	CODE_ERROR     = "ERROR"
-	CODE_NOT_FOUND = "NOT_FOUND"
+	CODE_SUCCESS      = "SUCCESS"
+	CODE_ERROR        = "ERROR"
+	CODE_NOT_FOUND    = "NOT_FOUND"
+	CODE_UNAUTHORIZED = "UNAUTHORIZED"
 )
 
 type ResponseBody struct {
@@ -27,6 +28,7 @@ type ResponseParam struct {
 	defaultHttpCode int
 	HttpCode        int
 	Message         string
+	Code            string
 }
 
 type ResponseOption = func(*ResponseParam)
@@ -47,6 +49,12 @@ func WithHttpCode(c int) ResponseOption {
 func WithMessage(m string) ResponseOption {
 	return func(rp *ResponseParam) {
 		rp.Message = m
+	}
+}
+
+func WithCode(c string) ResponseOption {
+	return func(rp *ResponseParam) {
+		rp.Code = c
 	}
 }
 
@@ -119,6 +127,10 @@ func Response(opts ...ResponseOption) error {
 
 	if p.Message != "" {
 		p.Body.Message = p.Message
+	}
+
+	if p.Code != "" {
+		p.Body.Code = p.Code
 	}
 
 	r, err := p.Serializer.Marshal(p.Body)
