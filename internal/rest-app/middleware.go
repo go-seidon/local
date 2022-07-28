@@ -24,7 +24,7 @@ func NewBasicAuthMiddleware(a auth.BasicAuth, s serialization.Serializer) func(h
 			if len(authTokens) != 2 {
 				Response(
 					WithWriterSerializer(w, s),
-					Error("credential is not specified"),
+					WithMessage("credential is not specified"),
 					WithHttpCode(http.StatusUnauthorized),
 					WithCode(CODE_UNAUTHORIZED),
 				)
@@ -37,7 +37,6 @@ func NewBasicAuthMiddleware(a auth.BasicAuth, s serialization.Serializer) func(h
 			if err != nil {
 				Response(
 					WithWriterSerializer(w, s),
-					Error(err.Error()),
 					WithHttpCode(http.StatusUnauthorized),
 					WithCode(CODE_UNAUTHORIZED),
 					WithMessage("failed check credential"),
@@ -47,7 +46,7 @@ func NewBasicAuthMiddleware(a auth.BasicAuth, s serialization.Serializer) func(h
 			if !res.TokenValid {
 				Response(
 					WithWriterSerializer(w, s),
-					Error("credential is invalid"),
+					WithMessage("credential is invalid"),
 					WithHttpCode(http.StatusUnauthorized),
 					WithCode(CODE_UNAUTHORIZED),
 				)

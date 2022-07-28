@@ -147,42 +147,6 @@ var _ = Describe("Response Package", func() {
 		})
 	})
 
-	Context("Error function", Label("unit"), func() {
-		var (
-			message string
-		)
-
-		BeforeEach(func() {
-			message = "failed do something"
-		})
-
-		When("message is specified", func() {
-			It("should set message", func() {
-				p := rest_app.ResponseParam{}
-				opt := rest_app.Error(message)
-
-				opt(&p)
-
-				Expect(p.Body.Code).To(Equal("ERROR"))
-				Expect(p.Body.Message).To(Equal(message))
-				Expect(p.Body.Data).To(BeNil())
-			})
-		})
-
-		When("message is not specified", func() {
-			It("should use default message", func() {
-				p := rest_app.ResponseParam{}
-				opt := rest_app.Error("")
-
-				opt(&p)
-
-				Expect(p.Body.Code).To(Equal("ERROR"))
-				Expect(p.Body.Message).To(Equal("error"))
-				Expect(p.Body.Data).To(BeNil())
-			})
-		})
-	})
-
 	Context("Response function", Label("unit"), func() {
 		var (
 			w *mock.MockResponseWriter

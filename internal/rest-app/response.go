@@ -65,21 +65,6 @@ func WithData(d interface{}) ResponseOption {
 	}
 }
 
-func Error(message string) ResponseOption {
-	return func(rp *ResponseParam) {
-		b := ResponseBody{
-			Message: "error",
-			Code:    CODE_ERROR,
-		}
-		if message != "" {
-			b.Message = message
-		}
-
-		rp.Body = b
-		rp.defaultHttpCode = http.StatusBadRequest
-	}
-}
-
 func Response(opts ...ResponseOption) error {
 	p := ResponseParam{
 		Body: ResponseBody{

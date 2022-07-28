@@ -41,7 +41,8 @@ func NewMethodNotAllowedHandler(log logging.Logger, s serialization.Serializer) 
 		Response(
 			WithWriterSerializer(w, s),
 			WithHttpCode(http.StatusMethodNotAllowed),
-			Error("method is not allowed"),
+			WithCode(CODE_ERROR),
+			WithMessage("method is not allowed"),
 		)
 	}
 }
@@ -70,7 +71,12 @@ func NewHealthCheckHandler(log logging.Logger, s serialization.Serializer, healt
 		r, err := healthService.Check()
 		if err != nil {
 
-			Response(WithWriterSerializer(w, s), Error(err.Error()))
+			Response(
+				WithWriterSerializer(w, s),
+				WithCode(CODE_ERROR),
+				WithMessage(err.Error()),
+				WithHttpCode(http.StatusBadRequest),
+			)
 			return
 		}
 
@@ -156,7 +162,12 @@ func NewDeleteFileHandler(log logging.Logger, s serialization.Serializer, delete
 			return
 		}
 
-		Response(WithWriterSerializer(w, s), Error(err.Error()))
+		Response(
+			WithWriterSerializer(w, s),
+			WithCode(CODE_ERROR),
+			WithMessage(err.Error()),
+			WithHttpCode(http.StatusBadRequest),
+		)
 	}
 }
 
@@ -176,7 +187,12 @@ func NewRetrieveFileHandler(log logging.Logger, s serialization.Serializer, retr
 			defer r.Data.Close()
 			data, err := io.ReadAll(r.Data)
 			if err != nil {
-				Response(WithWriterSerializer(w, s), Error(err.Error()))
+				Response(
+					WithWriterSerializer(w, s),
+					WithCode(CODE_ERROR),
+					WithMessage(err.Error()),
+					WithHttpCode(http.StatusBadRequest),
+				)
 				return
 			}
 
@@ -200,7 +216,12 @@ func NewRetrieveFileHandler(log logging.Logger, s serialization.Serializer, retr
 			return
 		}
 
-		Response(WithWriterSerializer(w, s), Error(err.Error()))
+		Response(
+			WithWriterSerializer(w, s),
+			WithCode(CODE_ERROR),
+			WithMessage(err.Error()),
+			WithHttpCode(http.StatusBadRequest),
+		)
 	}
 }
 
@@ -214,14 +235,24 @@ func NewUploadFileHandler(log logging.Logger, s serialization.Serializer, upload
 
 		file, fileHeader, err := req.FormFile("file")
 		if err != nil {
-			Response(WithWriterSerializer(w, s), Error(err.Error()))
+			Response(
+				WithWriterSerializer(w, s),
+				WithCode(CODE_ERROR),
+				WithMessage(err.Error()),
+				WithHttpCode(http.StatusBadRequest),
+			)
 			return
 		}
 		defer file.Close()
 
 		fileInfo, err := ParseMultipartFile(file, fileHeader)
 		if err != nil {
-			Response(WithWriterSerializer(w, s), Error(err.Error()))
+			Response(
+				WithWriterSerializer(w, s),
+				WithCode(CODE_ERROR),
+				WithMessage(err.Error()),
+				WithHttpCode(http.StatusBadRequest),
+			)
 			return
 		}
 
@@ -239,7 +270,12 @@ func NewUploadFileHandler(log logging.Logger, s serialization.Serializer, upload
 			),
 		)
 		if err != nil {
-			Response(WithWriterSerializer(w, s), Error(err.Error()))
+			Response(
+				WithWriterSerializer(w, s),
+				WithCode(CODE_ERROR),
+				WithMessage(err.Error()),
+				WithHttpCode(http.StatusBadRequest),
+			)
 			return
 		}
 
