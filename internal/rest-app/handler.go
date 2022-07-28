@@ -23,7 +23,12 @@ func NewNotFoundHandler(log logging.Logger, s serialization.Serializer) http.Han
 		defer log.Debug("Returning function: NotFoundHandler")
 
 		w.Header().Set("Content-Type", "application/json")
-		Response(WithWriterSerializer(w, s), NotFound("resource not found"))
+		Response(
+			WithWriterSerializer(w, s),
+			WithHttpCode(http.StatusNotFound),
+			WithCode(CODE_NOT_FOUND),
+			WithMessage("resource not found"),
+		)
 	}
 }
 
@@ -36,7 +41,8 @@ func NewMethodNotAllowedHandler(log logging.Logger, s serialization.Serializer) 
 		Response(
 			WithWriterSerializer(w, s),
 			WithHttpCode(http.StatusMethodNotAllowed),
-			Error("method is not allowed"),
+			WithCode(CODE_ERROR),
+			WithMessage("method is not allowed"),
 		)
 	}
 }
@@ -53,7 +59,7 @@ func NewRootHandler(log logging.Logger, s serialization.Serializer, config *Rest
 			AppName:    config.AppName,
 			AppVersion: config.AppVersion,
 		}
-		Response(WithWriterSerializer(w, s), Success(d))
+		Response(WithWriterSerializer(w, s), WithData(d))
 	}
 }
 
@@ -65,7 +71,12 @@ func NewHealthCheckHandler(log logging.Logger, s serialization.Serializer, healt
 		r, err := healthService.Check()
 		if err != nil {
 
-			Response(WithWriterSerializer(w, s), Error(err.Error()))
+			Response(
+				WithWriterSerializer(w, s),
+				WithCode(CODE_ERROR),
+				WithMessage(err.Error()),
+				WithHttpCode(http.StatusBadRequest),
+			)
 			return
 		}
 
@@ -108,7 +119,7 @@ func NewHealthCheckHandler(log logging.Logger, s serialization.Serializer, healt
 
 		Response(
 			WithWriterSerializer(w, s),
-			Success(d),
+			WithData(d),
 			WithMessage("success check service health"),
 		)
 	}
@@ -135,18 +146,28 @@ func NewDeleteFileHandler(log logging.Logger, s serialization.Serializer, delete
 
 			Response(
 				WithWriterSerializer(w, s),
-				Success(d),
+				WithData(d),
 				WithMessage("success delete file"),
 			)
 			return
 		}
 
 		if errors.Is(err, deleting.ErrorResourceNotFound) {
-			Response(WithWriterSerializer(w, s), NotFound(err.Error()))
+			Response(
+				WithWriterSerializer(w, s),
+				WithHttpCode(http.StatusNotFound),
+				WithCode(CODE_NOT_FOUND),
+				WithMessage(err.Error()),
+			)
 			return
 		}
 
-		Response(WithWriterSerializer(w, s), Error(err.Error()))
+		Response(
+			WithWriterSerializer(w, s),
+			WithCode(CODE_ERROR),
+			WithMessage(err.Error()),
+			WithHttpCode(http.StatusBadRequest),
+		)
 	}
 }
 
@@ -166,7 +187,12 @@ func NewRetrieveFileHandler(log logging.Logger, s serialization.Serializer, retr
 			defer r.Data.Close()
 			data, err := io.ReadAll(r.Data)
 			if err != nil {
-				Response(WithWriterSerializer(w, s), Error(err.Error()))
+				Response(
+					WithWriterSerializer(w, s),
+					WithCode(CODE_ERROR),
+					WithMessage(err.Error()),
+					WithHttpCode(http.StatusBadRequest),
+				)
 				return
 			}
 
@@ -181,11 +207,21 @@ func NewRetrieveFileHandler(log logging.Logger, s serialization.Serializer, retr
 		}
 
 		if errors.Is(err, retrieving.ErrorResourceNotFound) {
-			Response(WithWriterSerializer(w, s), NotFound(err.Error()))
+			Response(
+				WithWriterSerializer(w, s),
+				WithHttpCode(http.StatusNotFound),
+				WithCode(CODE_NOT_FOUND),
+				WithMessage(err.Error()),
+			)
 			return
 		}
 
-		Response(WithWriterSerializer(w, s), Error(err.Error()))
+		Response(
+			WithWriterSerializer(w, s),
+			WithCode(CODE_ERROR),
+			WithMessage(err.Error()),
+			WithHttpCode(http.StatusBadRequest),
+		)
 	}
 }
 
@@ -199,14 +235,24 @@ func NewUploadFileHandler(log logging.Logger, s serialization.Serializer, upload
 
 		file, fileHeader, err := req.FormFile("file")
 		if err != nil {
-			Response(WithWriterSerializer(w, s), Error(err.Error()))
+			Response(
+				WithWriterSerializer(w, s),
+				WithCode(CODE_ERROR),
+				WithMessage(err.Error()),
+				WithHttpCode(http.StatusBadRequest),
+			)
 			return
 		}
 		defer file.Close()
 
 		fileInfo, err := ParseMultipartFile(file, fileHeader)
 		if err != nil {
-			Response(WithWriterSerializer(w, s), Error(err.Error()))
+			Response(
+				WithWriterSerializer(w, s),
+				WithCode(CODE_ERROR),
+				WithMessage(err.Error()),
+				WithHttpCode(http.StatusBadRequest),
+			)
 			return
 		}
 
@@ -224,7 +270,12 @@ func NewUploadFileHandler(log logging.Logger, s serialization.Serializer, upload
 			),
 		)
 		if err != nil {
-			Response(WithWriterSerializer(w, s), Error(err.Error()))
+			Response(
+				WithWriterSerializer(w, s),
+				WithCode(CODE_ERROR),
+				WithMessage(err.Error()),
+				WithHttpCode(http.StatusBadRequest),
+			)
 			return
 		}
 
@@ -246,7 +297,7 @@ func NewUploadFileHandler(log logging.Logger, s serialization.Serializer, upload
 
 		Response(
 			WithWriterSerializer(w, s),
-			Success(d),
+			WithData(d),
 			WithMessage("success upload file"),
 		)
 	}

@@ -126,97 +126,23 @@ var _ = Describe("Response Package", func() {
 		})
 	})
 
-	Context("Success function", Label("unit"), func() {
+	Context("WithData function", Label("unit"), func() {
 		var (
 			data interface{}
 		)
 
 		BeforeEach(func() {
-			data = struct{}{}
+			data = struct{ Key string }{Key: "key"}
 		})
 
 		When("data is specified", func() {
-			It("should set data", func() {
+			It("should set http", func() {
 				p := rest_app.ResponseParam{}
-				opt := rest_app.Success(data)
+				opt := rest_app.WithData(data)
 
 				opt(&p)
 
-				Expect(p.Body.Code).To(Equal("SUCCESS"))
-				Expect(p.Body.Message).To(Equal("success"))
-				Expect(p.Body.Data).To(Equal(data))
-			})
-		})
-	})
-
-	Context("Error function", Label("unit"), func() {
-		var (
-			message string
-		)
-
-		BeforeEach(func() {
-			message = "failed do something"
-		})
-
-		When("message is specified", func() {
-			It("should set message", func() {
-				p := rest_app.ResponseParam{}
-				opt := rest_app.Error(message)
-
-				opt(&p)
-
-				Expect(p.Body.Code).To(Equal("ERROR"))
-				Expect(p.Body.Message).To(Equal(message))
-				Expect(p.Body.Data).To(BeNil())
-			})
-		})
-
-		When("message is not specified", func() {
-			It("should use default message", func() {
-				p := rest_app.ResponseParam{}
-				opt := rest_app.Error("")
-
-				opt(&p)
-
-				Expect(p.Body.Code).To(Equal("ERROR"))
-				Expect(p.Body.Message).To(Equal("error"))
-				Expect(p.Body.Data).To(BeNil())
-			})
-		})
-	})
-
-	Context("NotFound function", Label("unit"), func() {
-		var (
-			message string
-		)
-
-		BeforeEach(func() {
-			message = "something is not found"
-		})
-
-		When("message is specified", func() {
-			It("should set message", func() {
-				p := rest_app.ResponseParam{}
-				opt := rest_app.NotFound(message)
-
-				opt(&p)
-
-				Expect(p.Body.Code).To(Equal("NOT_FOUND"))
-				Expect(p.Body.Message).To(Equal(message))
-				Expect(p.Body.Data).To(BeNil())
-			})
-		})
-
-		When("message is not specified", func() {
-			It("should use default message", func() {
-				p := rest_app.ResponseParam{}
-				opt := rest_app.NotFound("")
-
-				opt(&p)
-
-				Expect(p.Body.Code).To(Equal("NOT_FOUND"))
-				Expect(p.Body.Message).To(Equal("not found"))
-				Expect(p.Body.Data).To(BeNil())
+				Expect(p.Data).To(Equal(data))
 			})
 		})
 	})
