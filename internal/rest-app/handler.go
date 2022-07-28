@@ -58,7 +58,7 @@ func NewRootHandler(log logging.Logger, s serialization.Serializer, config *Rest
 			AppName:    config.AppName,
 			AppVersion: config.AppVersion,
 		}
-		Response(WithWriterSerializer(w, s), Success(d))
+		Response(WithWriterSerializer(w, s), WithData(d))
 	}
 }
 
@@ -113,7 +113,7 @@ func NewHealthCheckHandler(log logging.Logger, s serialization.Serializer, healt
 
 		Response(
 			WithWriterSerializer(w, s),
-			Success(d),
+			WithData(d),
 			WithMessage("success check service health"),
 		)
 	}
@@ -140,7 +140,7 @@ func NewDeleteFileHandler(log logging.Logger, s serialization.Serializer, delete
 
 			Response(
 				WithWriterSerializer(w, s),
-				Success(d),
+				WithData(d),
 				WithMessage("success delete file"),
 			)
 			return
@@ -261,7 +261,7 @@ func NewUploadFileHandler(log logging.Logger, s serialization.Serializer, upload
 
 		Response(
 			WithWriterSerializer(w, s),
-			Success(d),
+			WithData(d),
 			WithMessage("success upload file"),
 		)
 	}

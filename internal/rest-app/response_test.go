@@ -126,25 +126,23 @@ var _ = Describe("Response Package", func() {
 		})
 	})
 
-	Context("Success function", Label("unit"), func() {
+	Context("WithData function", Label("unit"), func() {
 		var (
 			data interface{}
 		)
 
 		BeforeEach(func() {
-			data = struct{}{}
+			data = struct{ Key string }{Key: "key"}
 		})
 
 		When("data is specified", func() {
-			It("should set data", func() {
+			It("should set http", func() {
 				p := rest_app.ResponseParam{}
-				opt := rest_app.Success(data)
+				opt := rest_app.WithData(data)
 
 				opt(&p)
 
-				Expect(p.Body.Code).To(Equal("SUCCESS"))
-				Expect(p.Body.Message).To(Equal("success"))
-				Expect(p.Body.Data).To(Equal(data))
+				Expect(p.Data).To(Equal(data))
 			})
 		})
 	})

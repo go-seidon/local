@@ -29,6 +29,7 @@ type ResponseParam struct {
 	HttpCode        int
 	Message         string
 	Code            string
+	Data            interface{}
 }
 
 type ResponseOption = func(*ResponseParam)
@@ -58,16 +59,9 @@ func WithCode(c string) ResponseOption {
 	}
 }
 
-func Success(d interface{}) ResponseOption {
+func WithData(d interface{}) ResponseOption {
 	return func(rp *ResponseParam) {
-		b := ResponseBody{
-			Message: "success",
-			Code:    CODE_SUCCESS,
-			Data:    d,
-		}
-
-		rp.Body = b
-		rp.defaultHttpCode = http.StatusOK
+		rp.Data = d
 	}
 }
 
@@ -116,6 +110,10 @@ func Response(opts ...ResponseOption) error {
 
 	if p.Code != "" {
 		p.Body.Code = p.Code
+	}
+
+	if p.Data != nil {
+		p.Body.Data = p.Data
 	}
 
 	r, err := p.Serializer.Marshal(p.Body)
