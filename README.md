@@ -7,9 +7,7 @@
 No doc right now
 
 ## Todo
-1. Refactor `Response`, `Success`, `Error`, `Notfound`
-2. Lowercased and slugify `file.name`
-3. Add verbose logging:
+1. Add verbose logging:
 ```json
 {
   "correlation_id": "",
@@ -19,7 +17,9 @@ No doc right now
   "call_stack": "",
 }
 ```
-4. Separate db write and read
+2. Inject logger to mysql instance (logging to stdout with plaintext)
+3. Separate db write and read
+4. Add `repository-postgre` implementation
 
 ## Nice to have
 1. Separate findFile query in DeleteFile and RetrieveFile
