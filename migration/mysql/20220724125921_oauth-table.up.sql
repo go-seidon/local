@@ -8,4 +8,8 @@ CREATE TABLE `oauth_client` (
   `updated_at` BIGINT(20) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE unique_client_id(`client_id`)
-) ENGINE = InnoDB;
+) 
+DEFAULT CHARACTER SET utf8
+COLLATE utf8_unicode_ci
+ENGINE = InnoDB;
+
