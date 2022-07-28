@@ -23,7 +23,12 @@ func NewNotFoundHandler(log logging.Logger, s serialization.Serializer) http.Han
 		defer log.Debug("Returning function: NotFoundHandler")
 
 		w.Header().Set("Content-Type", "application/json")
-		Response(WithWriterSerializer(w, s), NotFound("resource not found"))
+		Response(
+			WithWriterSerializer(w, s),
+			WithHttpCode(http.StatusNotFound),
+			WithCode(CODE_NOT_FOUND),
+			WithMessage("resource not found"),
+		)
 	}
 }
 
@@ -142,7 +147,12 @@ func NewDeleteFileHandler(log logging.Logger, s serialization.Serializer, delete
 		}
 
 		if errors.Is(err, deleting.ErrorResourceNotFound) {
-			Response(WithWriterSerializer(w, s), NotFound(err.Error()))
+			Response(
+				WithWriterSerializer(w, s),
+				WithHttpCode(http.StatusNotFound),
+				WithCode(CODE_NOT_FOUND),
+				WithMessage(err.Error()),
+			)
 			return
 		}
 
@@ -181,7 +191,12 @@ func NewRetrieveFileHandler(log logging.Logger, s serialization.Serializer, retr
 		}
 
 		if errors.Is(err, retrieving.ErrorResourceNotFound) {
-			Response(WithWriterSerializer(w, s), NotFound(err.Error()))
+			Response(
+				WithWriterSerializer(w, s),
+				WithHttpCode(http.StatusNotFound),
+				WithCode(CODE_NOT_FOUND),
+				WithMessage(err.Error()),
+			)
 			return
 		}
 

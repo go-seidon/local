@@ -185,42 +185,6 @@ var _ = Describe("Response Package", func() {
 		})
 	})
 
-	Context("NotFound function", Label("unit"), func() {
-		var (
-			message string
-		)
-
-		BeforeEach(func() {
-			message = "something is not found"
-		})
-
-		When("message is specified", func() {
-			It("should set message", func() {
-				p := rest_app.ResponseParam{}
-				opt := rest_app.NotFound(message)
-
-				opt(&p)
-
-				Expect(p.Body.Code).To(Equal("NOT_FOUND"))
-				Expect(p.Body.Message).To(Equal(message))
-				Expect(p.Body.Data).To(BeNil())
-			})
-		})
-
-		When("message is not specified", func() {
-			It("should use default message", func() {
-				p := rest_app.ResponseParam{}
-				opt := rest_app.NotFound("")
-
-				opt(&p)
-
-				Expect(p.Body.Code).To(Equal("NOT_FOUND"))
-				Expect(p.Body.Message).To(Equal("not found"))
-				Expect(p.Body.Data).To(BeNil())
-			})
-		})
-	})
-
 	Context("Response function", Label("unit"), func() {
 		var (
 			w *mock.MockResponseWriter

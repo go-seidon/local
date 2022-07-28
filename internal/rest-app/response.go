@@ -86,21 +86,6 @@ func Error(message string) ResponseOption {
 	}
 }
 
-func NotFound(message string) ResponseOption {
-	return func(rp *ResponseParam) {
-		b := ResponseBody{
-			Message: "not found",
-			Code:    CODE_NOT_FOUND,
-		}
-		if message != "" {
-			b.Message = message
-		}
-
-		rp.Body = b
-		rp.defaultHttpCode = http.StatusNotFound
-	}
-}
-
 func Response(opts ...ResponseOption) error {
 	p := ResponseParam{
 		Body: ResponseBody{
