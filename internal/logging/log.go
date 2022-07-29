@@ -1,10 +1,12 @@
 package logging
 
+import "context"
+
 type Logger interface {
 	SimpleLog
 	FormatedLog
 	LineLog
-	WithFields(fs map[string]interface{}) Logger
+	CustomLog
 }
 
 type SimpleLog interface {
@@ -26,6 +28,12 @@ type LineLog interface {
 	Debugln(msg ...interface{})
 	Errorln(msg ...interface{})
 	Warnln(msg ...interface{})
+}
+
+type CustomLog interface {
+	WithFields(fs map[string]interface{}) Logger
+	WithError(err error) Logger
+	WithContext(ctx context.Context) Logger
 }
 
 type LogOption struct {
